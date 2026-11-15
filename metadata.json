@@ -1,0 +1,6 @@
+{
+  "name": "Conjugo — Práctica de verbos franceses",
+  "description": "Aplicación educativa para alumnos de ESO y Bachillerato para practicar la conjugación y pronunciación de verbos en francés con seguimiento de rachas, estadísticas, niveles y modo sin conexión.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
