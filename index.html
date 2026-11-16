@@ -1054,8 +1054,31 @@
       let speaking = false;
       let playToken = 0;
       let currentAudio = null;
+      let currentBufferSource = null;
+      let activeUtterance = null;
+      let speakSafetyTimer = null;
+      let audioCtx = null;
+      let audioErrorMsg = '';
       let ttsEndpointUnavailable = false;
-      const ttsAudioCache = new Map();
+      let ttsProbeDone = false;
+      const ttsBufferCache = new Map();
+      const ttsBlobCache = new Map();
+
+      function ensureAudioContext() {
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (!Ctx) return null;
+          if (!audioCtx) audioCtx = new Ctx();
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(() => {});
+          }
+          return audioCtx;
+        } catch {
+          return null;
+        }
+      }
+      document.addEventListener('pointerdown', ensureAudioContext, { passive: true });
+      document.addEventListener('keydown', ensureAudioContext, { passive: true });
 
       function getFrenchVoice() {
         if (!('speechSynthesis' in window)) return null;
@@ -1069,12 +1092,32 @@
         getFrenchVoice();
         window.speechSynthesis.onvoiceschanged = () => getFrenchVoice();
       }
+
       function updateSpeakButtons() {
         const btn = document.getElementById('speakMainBtn');
         if (btn) btn.textContent = speaking ? '🔊 Reproduciendo...' : '🔊 Escuchar';
+        const testBtn = document.getElementById('testVoiceBtn');
+        if (testBtn) testBtn.textContent = speaking ? '🔊 Reproduciendo...' : '🔊 Probar audio';
+        const errEl = document.getElementById('audioErrorNote');
+        if (errEl) {
+          errEl.textContent = audioErrorMsg;
+          errEl.style.display = audioErrorMsg ? 'block' : 'none';
+        }
       }
+
+      function setAudioError(msg) {
+        audioErrorMsg = msg || '';
+        updateSpeakButtons();
+      }
+
       function stopSpeaking() {
         playToken += 1;
+        if (speakSafetyTimer) { clearTimeout(speakSafetyTimer); speakSafetyTimer = null; }
+        if (currentBufferSource) {
+          try { currentBufferSource.stop(); } catch {}
+          try { currentBufferSource.disconnect(); } catch {}
+          currentBufferSource = null;
+        }
         if (currentAudio) {
           try {
             currentAudio.pause();
@@ -1082,37 +1125,130 @@
           } catch {}
           currentAudio = null;
         }
+        activeUtterance = null;
         if ('speechSynthesis' in window) {
-          try { window.speechSynthesis.cancel(); } catch {}
+          try {
+            if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+              window.speechSynthesis.cancel();
+            }
+          } catch {}
         }
         speaking = false;
         updateSpeakButtons();
       }
-      function speakWithBrowser(text, rate, token) {
-        if (token !== playToken || !('speechSynthesis' in window)) {
-          if (token === playToken) { speaking = false; updateSpeakButtons(); }
+
+      function speakWithBrowser(text, rate, token, skipVoice = false) {
+        if (token !== playToken) return;
+        if (!('speechSynthesis' in window)) {
+          speaking = false;
+          setAudioError('Tu navegador no admite síntesis de voz y el servidor TTS no está disponible.');
           return;
         }
         try {
-          window.speechSynthesis.cancel();
+          const synth = window.speechSynthesis;
+          try { synth.resume(); } catch {}
+          const wasBusy = synth.speaking || synth.pending;
+
           const u = new SpeechSynthesisUtterance(text);
-          const v = getFrenchVoice();
-          if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'fr-FR'; }
+          activeUtterance = u;
+          if (!skipVoice) {
+            const v = getFrenchVoice();
+            if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'fr-FR'; }
+          } else {
+            u.lang = 'fr-FR';
+          }
           u.rate = rate;
-          u.onstart = () => { if (token === playToken) { speaking = true; updateSpeakButtons(); } };
-          u.onend = u.onerror = () => { if (token === playToken) { speaking = false; updateSpeakButtons(); } };
-          window.speechSynthesis.speak(u);
+          u.volume = 1;
+
+          u.onstart = () => {
+            if (token !== playToken) return;
+            speaking = true;
+            setAudioError('');
+          };
+          u.onend = () => {
+            if (token !== playToken) return;
+            if (activeUtterance === u) activeUtterance = null;
+            if (speakSafetyTimer) { clearTimeout(speakSafetyTimer); speakSafetyTimer = null; }
+            speaking = false;
+            updateSpeakButtons();
+          };
+          u.onerror = () => {
+            if (token !== playToken) return;
+            if (!skipVoice && u.voice) {
+              speakWithBrowser(text, rate, token, true);
+              return;
+            }
+            if (activeUtterance === u) activeUtterance = null;
+            if (speakSafetyTimer) { clearTimeout(speakSafetyTimer); speakSafetyTimer = null; }
+            speaking = false;
+            setAudioError('El navegador no pudo reproducir audio. Comprueba el volumen o activa una voz en francés en tu dispositivo.');
+          };
+
+          speaking = true;
+          setAudioError('');
+          if (speakSafetyTimer) clearTimeout(speakSafetyTimer);
+          speakSafetyTimer = setTimeout(() => {
+            if (token === playToken && speaking) {
+              speaking = false;
+              updateSpeakButtons();
+            }
+          }, 7000);
+
+          if (wasBusy) {
+            try { synth.cancel(); } catch {}
+            setTimeout(() => {
+              if (token === playToken) {
+                try { synth.resume(); } catch {}
+                synth.speak(u);
+              }
+            }, 60);
+          } else {
+            synth.speak(u);
+          }
         } catch {
-          if (token === playToken) { speaking = false; updateSpeakButtons(); }
+          if (token === playToken) {
+            speaking = false;
+            setAudioError('No se pudo iniciar la síntesis de voz en este navegador.');
+          }
         }
       }
-      function base64ToBlobUrl(b64, mime) {
+
+      function base64ToUint8(b64) {
         const bin = atob(b64);
         const bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        return URL.createObjectURL(new Blob([bytes], { type: mime || 'audio/wav' }));
+        return bytes;
       }
-      async function playAudioUrl(url, rate, token, fallbackText) {
+
+      async function playAudioBuffer(buffer, rate, token, fallbackText) {
+        if (token !== playToken) return false;
+        const ctx = ensureAudioContext();
+        if (!ctx) return false;
+        try {
+          if (ctx.state === 'suspended') await ctx.resume();
+          const src = ctx.createBufferSource();
+          src.buffer = buffer;
+          src.playbackRate.value = rate;
+          src.connect(ctx.destination);
+          currentBufferSource = src;
+          src.onended = () => {
+            if (currentBufferSource === src) currentBufferSource = null;
+            if (token === playToken) {
+              speaking = false;
+              updateSpeakButtons();
+            }
+          };
+          speaking = true;
+          setAudioError('');
+          src.start(0);
+          return true;
+        } catch {
+          if (currentBufferSource) currentBufferSource = null;
+          return false;
+        }
+      }
+
+      async function playBlobUrl(url, rate, token, fallbackText) {
         if (token !== playToken) return;
         try {
           const audio = new Audio(url);
@@ -1128,33 +1264,28 @@
             speakWithBrowser(fallbackText, rate, token);
           };
           speaking = true;
-          updateSpeakButtons();
+          setAudioError('');
           await audio.play();
         } catch {
           if (currentAudio) currentAudio = null;
           speakWithBrowser(fallbackText, rate, token);
         }
       }
-      async function speakFr(text, rate = 0.95) {
-        const clean = String(text || '').trim();
-        if (!clean) return;
-        stopSpeaking();
-        const token = playToken;
 
-        const cachedUrl = ttsAudioCache.get(clean);
-        if (cachedUrl) {
-          await playAudioUrl(cachedUrl, rate, token, clean);
-          return;
+      function rememberCache(key, buffer, blobUrl) {
+        if (ttsBlobCache.size >= 150) {
+          const firstKey = ttsBlobCache.keys().next().value;
+          if (firstKey) {
+            URL.revokeObjectURL(ttsBlobCache.get(firstKey));
+            ttsBlobCache.delete(firstKey);
+            ttsBufferCache.delete(firstKey);
+          }
         }
+        if (buffer) ttsBufferCache.set(key, buffer);
+        if (blobUrl) ttsBlobCache.set(key, blobUrl);
+      }
 
-        const canTryRemote = navigator.onLine !== false && window.location.protocol !== 'file:' && !ttsEndpointUnavailable;
-        if (!canTryRemote) {
-          speakWithBrowser(clean, rate, token);
-          return;
-        }
-
-        speaking = true;
-        updateSpeakButtons();
+      async function fetchGeminiAudio(clean) {
         const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
         const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : null;
         try {
@@ -1165,35 +1296,82 @@
             signal: ctrl ? ctrl.signal : undefined
           });
           if (timer) clearTimeout(timer);
-          if (token !== playToken) return;
-
           if (!res.ok) {
-            if (res.status === 404 || res.status === 503) ttsEndpointUnavailable = true;
-            speakWithBrowser(clean, rate, token);
-            return;
-          }
-
-          const data = await res.json();
-          if (token !== playToken) return;
-          if (!data || !data.audioBase64) {
-            speakWithBrowser(clean, rate, token);
-            return;
-          }
-
-          const url = base64ToBlobUrl(data.audioBase64, data.mimeType || 'audio/wav');
-          if (ttsAudioCache.size >= 150) {
-            const firstKey = ttsAudioCache.keys().next().value;
-            if (firstKey) {
-              URL.revokeObjectURL(ttsAudioCache.get(firstKey));
-              ttsAudioCache.delete(firstKey);
+            if (res.status === 403 || res.status === 404 || res.status === 503) {
+              ttsEndpointUnavailable = true;
             }
+            return null;
           }
-          ttsAudioCache.set(clean, url);
-          await playAudioUrl(url, rate, token, clean);
+          const data = await res.json();
+          if (!data || !data.audioBase64) return null;
+          const bytes = base64ToUint8(data.audioBase64);
+          const blobUrl = URL.createObjectURL(new Blob([bytes], { type: data.mimeType || 'audio/wav' }));
+          let decoded = null;
+          const ctx = ensureAudioContext();
+          if (ctx) {
+            try {
+              decoded = await ctx.decodeAudioData(bytes.buffer.slice(0));
+            } catch {}
+          }
+          rememberCache(clean, decoded, blobUrl);
+          return { decoded, blobUrl };
         } catch {
           if (timer) clearTimeout(timer);
-          speakWithBrowser(clean, rate, token);
+          return null;
         }
+      }
+
+      (function probeTtsOnStart() {
+        if (ttsProbeDone) return;
+        ttsProbeDone = true;
+        if (navigator.onLine === false || window.location.protocol === 'file:') {
+          ttsEndpointUnavailable = true;
+          return;
+        }
+        fetchGeminiAudio('bonjour').then((res) => {
+          if (!res) ttsEndpointUnavailable = true;
+        }).catch(() => {
+          ttsEndpointUnavailable = true;
+        });
+      })();
+
+      async function speakFr(text, rate = 0.95) {
+        const clean = String(text || '').trim();
+        if (!clean) return;
+        ensureAudioContext();
+        stopSpeaking();
+        const token = playToken;
+
+        const cachedBuf = ttsBufferCache.get(clean);
+        if (cachedBuf && await playAudioBuffer(cachedBuf, rate, token, clean)) {
+          return;
+        }
+        const cachedBlob = ttsBlobCache.get(clean);
+        if (cachedBlob) {
+          await playBlobUrl(cachedBlob, rate, token, clean);
+          return;
+        }
+
+        const canTryRemote = navigator.onLine !== false && window.location.protocol !== 'file:' && !ttsEndpointUnavailable;
+        if (!canTryRemote) {
+          speakWithBrowser(clean, rate, token);
+          return;
+        }
+
+        speaking = true;
+        setAudioError('');
+        const audioData = await fetchGeminiAudio(clean);
+        if (token !== playToken) return;
+
+        if (!audioData) {
+          speakWithBrowser(clean, rate, token);
+          return;
+        }
+
+        if (audioData.decoded && await playAudioBuffer(audioData.decoded, rate, token, clean)) {
+          return;
+        }
+        await playBlobUrl(audioData.blobUrl, rate, token, clean);
       }
 
       // =========================================================
@@ -1631,6 +1809,7 @@
                         <button type="button" class="btn btn-outline btn-sm tabular" id="speakSlowBtn">0.7× Lento</button>
                       </div>
                     </div>
+                    <p id="audioErrorNote" class="xs" style="display:none;color:var(--rose);margin-top:8px;font-weight:600;"></p>
                     <p class="xs muted" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">${esc(question.tip)}</p>
                   </div>
                   <div style="display:flex;justify-content:flex-end;margin-top:16px;">
@@ -2044,7 +2223,11 @@
                 <div class="list-row"><span>✓ Tiempos verbales completos</span><span class="xs muted tabular">${TENSES.length} tiempos</span></div>
                 <div class="list-row"><span>✓ Estadísticas, puntos XP, niveles y rachas</span><span class="xs muted">LocalStorage</span></div>
                 <div class="list-row">
-                  <div><span>✓ Voz francesa local del navegador</span><p class="xs muted">${hasVoice ? 'Voz fr-FR detectada.' : 'Usa el motor de voz del sistema.'}</p></div>
+                  <div>
+                    <span>✓ Pronunciación en francés</span>
+                    <p class="xs muted">${hasVoice ? 'Voz fr-FR detectada en el navegador.' : 'Usa voz Gemini TTS o motor de voz del sistema.'}</p>
+                    <p id="audioErrorNote" class="xs" style="display:none;color:var(--rose);margin-top:4px;font-weight:600;"></p>
+                  </div>
                   <button type="button" class="btn btn-outline btn-sm" id="testVoiceBtn">🔊 Probar audio</button>
                 </div>
               </div>

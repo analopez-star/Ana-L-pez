@@ -2,9 +2,37 @@
 
 let cachedFrenchVoice: SpeechSynthesisVoice | null = null;
 let currentAudio: HTMLAudioElement | null = null;
+let currentBufferSource: AudioBufferSourceNode | null = null;
+let activeUtterance: SpeechSynthesisUtterance | null = null;
+let speakSafetyTimer: number | null = null;
+let audioCtx: AudioContext | null = null;
 let playToken = 0;
 let ttsEndpointUnavailable = false;
-const ttsAudioCache = new Map<string, string>();
+let ttsProbeStarted = false;
+
+const ttsBufferCache = new Map<string, AudioBuffer>();
+const ttsBlobCache = new Map<string, string>();
+
+function ensureAudioContext(): AudioContext | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const Win = window as Window & { webkitAudioContext?: typeof AudioContext };
+    const Ctx = window.AudioContext || Win.webkitAudioContext;
+    if (!Ctx) return null;
+    if (!audioCtx) audioCtx = new Ctx();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  } catch {
+    return null;
+  }
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('pointerdown', ensureAudioContext, { passive: true });
+  document.addEventListener('keydown', ensureAudioContext, { passive: true });
+}
 
 function findFrenchVoice(): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
@@ -36,6 +64,23 @@ export function hasFrenchVoiceInstalled(): boolean {
 
 export function stopSpeaking(): void {
   playToken += 1;
+  if (speakSafetyTimer !== null && typeof window !== 'undefined') {
+    window.clearTimeout(speakSafetyTimer);
+    speakSafetyTimer = null;
+  }
+  if (currentBufferSource) {
+    try {
+      currentBufferSource.stop();
+    } catch {
+      // ignore
+    }
+    try {
+      currentBufferSource.disconnect();
+    } catch {
+      // ignore
+    }
+    currentBufferSource = null;
+  }
   if (currentAudio) {
     try {
       currentAudio.pause();
@@ -45,9 +90,12 @@ export function stopSpeaking(): void {
     }
     currentAudio = null;
   }
+  activeUtterance = null;
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     try {
-      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
+      }
     } catch {
       // ignore
     }
@@ -58,7 +106,8 @@ function speakWithBrowser(
   text: string,
   rate: number,
   token: number,
-  options?: { onStart?: () => void; onEnd?: () => void }
+  options?: { onStart?: () => void; onEnd?: () => void },
+  skipVoice = false
 ): void {
   if (
     token !== playToken ||
@@ -70,44 +119,127 @@ function speakWithBrowser(
   }
 
   try {
-    window.speechSynthesis.cancel();
+    const synth = window.speechSynthesis;
+    try {
+      synth.resume();
+    } catch {
+      // ignore
+    }
+    const wasBusy = synth.speaking || synth.pending;
+
     const utterance = new SpeechSynthesisUtterance(text);
-    const voice = cachedFrenchVoice || findFrenchVoice();
-    if (voice) {
-      utterance.voice = voice;
-      utterance.lang = voice.lang;
+    activeUtterance = utterance;
+    if (!skipVoice) {
+      const voice = cachedFrenchVoice || findFrenchVoice();
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      } else {
+        utterance.lang = 'fr-FR';
+      }
     } else {
       utterance.lang = 'fr-FR';
     }
     utterance.rate = rate;
     utterance.pitch = 1;
+    utterance.volume = 1;
 
     utterance.onstart = () => {
       if (token === playToken) options?.onStart?.();
     };
     utterance.onend = () => {
-      if (token === playToken) options?.onEnd?.();
+      if (token !== playToken) return;
+      if (activeUtterance === utterance) activeUtterance = null;
+      if (speakSafetyTimer !== null) {
+        window.clearTimeout(speakSafetyTimer);
+        speakSafetyTimer = null;
+      }
+      options?.onEnd?.();
     };
     utterance.onerror = () => {
-      if (token === playToken) options?.onEnd?.();
+      if (token !== playToken) return;
+      if (!skipVoice && utterance.voice) {
+        speakWithBrowser(text, rate, token, options, true);
+        return;
+      }
+      if (activeUtterance === utterance) activeUtterance = null;
+      if (speakSafetyTimer !== null) {
+        window.clearTimeout(speakSafetyTimer);
+        speakSafetyTimer = null;
+      }
+      options?.onEnd?.();
     };
 
-    window.speechSynthesis.speak(utterance);
+    options?.onStart?.();
+    if (speakSafetyTimer !== null) window.clearTimeout(speakSafetyTimer);
+    speakSafetyTimer = window.setTimeout(() => {
+      if (token === playToken) options?.onEnd?.();
+    }, 7000);
+
+    if (wasBusy) {
+      try {
+        synth.cancel();
+      } catch {
+        // ignore
+      }
+      window.setTimeout(() => {
+        if (token === playToken) {
+          try {
+            synth.resume();
+          } catch {
+            // ignore
+          }
+          synth.speak(utterance);
+        }
+      }, 60);
+    } else {
+      synth.speak(utterance);
+    }
   } catch {
     if (token === playToken) options?.onEnd?.();
   }
 }
 
-function base64ToBlobUrl(audioBase64: string, mimeType: string): string {
+function base64ToArrayBuffer(audioBase64: string): ArrayBuffer {
   const binary = atob(audioBase64);
-  const bytes = new Uint8Array(binary.length);
+  const arrayBuffer = new ArrayBuffer(binary.length);
+  const bytes = new Uint8Array(arrayBuffer);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
-  return URL.createObjectURL(new Blob([bytes], { type: mimeType || 'audio/wav' }));
+  return arrayBuffer;
 }
 
-async function playAudioUrl(
+async function playAudioBuffer(
+  buffer: AudioBuffer,
+  rate: number,
+  token: number,
+  options?: { onStart?: () => void; onEnd?: () => void }
+): Promise<boolean> {
+  if (token !== playToken) return false;
+  const ctx = ensureAudioContext();
+  if (!ctx) return false;
+  try {
+    if (ctx.state === 'suspended') await ctx.resume();
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.playbackRate.value = rate;
+    src.connect(ctx.destination);
+    currentBufferSource = src;
+    src.onended = () => {
+      if (currentBufferSource === src) currentBufferSource = null;
+      if (token === playToken) options?.onEnd?.();
+    };
+    options?.onStart?.();
+    src.start(0);
+    return true;
+  } catch {
+    if (currentBufferSource) currentBufferSource = null;
+    return false;
+  }
+}
+
+async function playBlobUrl(
   url: string,
   rate: number,
   token: number,
@@ -138,6 +270,80 @@ async function playAudioUrl(
   }
 }
 
+async function fetchGeminiAudio(
+  clean: string
+): Promise<{ decoded: AudioBuffer | null; blobUrl: string } | null> {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = controller ? window.setTimeout(() => controller.abort(), 8000) : null;
+
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: clean }),
+      signal: controller?.signal,
+    });
+    if (timeoutId !== null) window.clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      if (res.status === 403 || res.status === 404 || res.status === 503) {
+        ttsEndpointUnavailable = true;
+      }
+      return null;
+    }
+
+    const data = (await res.json()) as { audioBase64?: string; mimeType?: string };
+    if (!data?.audioBase64) return null;
+
+    const arrayBuffer = base64ToArrayBuffer(data.audioBase64);
+    const blobUrl = URL.createObjectURL(
+      new Blob([arrayBuffer], { type: data.mimeType || 'audio/wav' })
+    );
+
+    let decoded: AudioBuffer | null = null;
+    const ctx = ensureAudioContext();
+    if (ctx) {
+      try {
+        decoded = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      } catch {
+        decoded = null;
+      }
+    }
+
+    if (ttsBlobCache.size >= 150) {
+      const oldestKey = ttsBlobCache.keys().next().value;
+      if (oldestKey) {
+        const oldUrl = ttsBlobCache.get(oldestKey);
+        if (oldUrl) URL.revokeObjectURL(oldUrl);
+        ttsBlobCache.delete(oldestKey);
+        ttsBufferCache.delete(oldestKey);
+      }
+    }
+    if (decoded) ttsBufferCache.set(clean, decoded);
+    ttsBlobCache.set(clean, blobUrl);
+
+    return { decoded, blobUrl };
+  } catch {
+    if (timeoutId !== null) window.clearTimeout(timeoutId);
+    return null;
+  }
+}
+
+if (typeof window !== 'undefined' && !ttsProbeStarted) {
+  ttsProbeStarted = true;
+  if (navigator.onLine === false || window.location.protocol === 'file:') {
+    ttsEndpointUnavailable = true;
+  } else {
+    fetchGeminiAudio('bonjour')
+      .then((res) => {
+        if (!res) ttsEndpointUnavailable = true;
+      })
+      .catch(() => {
+        ttsEndpointUnavailable = true;
+      });
+  }
+}
+
 export async function speakFrench(
   text: string,
   options?: { rate?: number; onStart?: () => void; onEnd?: () => void }
@@ -149,12 +355,18 @@ export async function speakFrench(
     return;
   }
 
+  ensureAudioContext();
   stopSpeaking();
   const token = playToken;
 
-  const cachedUrl = ttsAudioCache.get(clean);
+  const cachedBuf = ttsBufferCache.get(clean);
+  if (cachedBuf && (await playAudioBuffer(cachedBuf, rate, token, options))) {
+    return;
+  }
+
+  const cachedUrl = ttsBlobCache.get(clean);
   if (cachedUrl) {
-    await playAudioUrl(cachedUrl, rate, token, clean, options);
+    await playBlobUrl(cachedUrl, rate, token, clean, options);
     return;
   }
 
@@ -170,48 +382,16 @@ export async function speakFrench(
   }
 
   options?.onStart?.();
-  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeoutId = controller ? window.setTimeout(() => controller.abort(), 8000) : null;
+  const audioData = await fetchGeminiAudio(clean);
+  if (token !== playToken) return;
 
-  try {
-    const res = await fetch('/api/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: clean }),
-      signal: controller?.signal,
-    });
-    if (timeoutId !== null) window.clearTimeout(timeoutId);
-    if (token !== playToken) return;
-
-    if (!res.ok) {
-      if (res.status === 404 || res.status === 503) {
-        ttsEndpointUnavailable = true;
-      }
-      speakWithBrowser(clean, rate, token, options);
-      return;
-    }
-
-    const data = (await res.json()) as { audioBase64?: string; mimeType?: string };
-    if (token !== playToken) return;
-
-    if (!data?.audioBase64) {
-      speakWithBrowser(clean, rate, token, options);
-      return;
-    }
-
-    const url = base64ToBlobUrl(data.audioBase64, data.mimeType || 'audio/wav');
-    if (ttsAudioCache.size >= 150) {
-      const oldestKey = ttsAudioCache.keys().next().value;
-      if (oldestKey) {
-        const oldUrl = ttsAudioCache.get(oldestKey);
-        if (oldUrl) URL.revokeObjectURL(oldUrl);
-        ttsAudioCache.delete(oldestKey);
-      }
-    }
-    ttsAudioCache.set(clean, url);
-    await playAudioUrl(url, rate, token, clean, options);
-  } catch {
-    if (timeoutId !== null) window.clearTimeout(timeoutId);
+  if (!audioData) {
     speakWithBrowser(clean, rate, token, options);
+    return;
   }
+
+  if (audioData.decoded && (await playAudioBuffer(audioData.decoded, rate, token, options))) {
+    return;
+  }
+  await playBlobUrl(audioData.blobUrl, rate, token, clean, options);
 }

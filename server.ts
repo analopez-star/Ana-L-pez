@@ -6,6 +6,7 @@ import { GoogleGenAI } from '@google/genai';
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const audioCache = new Map<string, { audioBase64: string; mimeType: string }>();
+let permanentlyUnavailableError: string | null = null;
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -19,6 +20,11 @@ app.post('/api/tts', async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
   if (!apiKey) {
     res.status(503).json({ error: 'GEMINI_API_KEY_NOT_CONFIGURED' });
+    return;
+  }
+
+  if (permanentlyUnavailableError) {
+    res.status(403).json({ error: permanentlyUnavailableError });
     return;
   }
 
@@ -84,6 +90,16 @@ app.post('/api/tts', async (req, res) => {
     res.status(200).json(payload);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'TTS_GENERATION_FAILED';
+    const isAuthOrBilling =
+      message.includes('PERMISSION_DENIED') ||
+      message.includes('API_KEY_INVALID') ||
+      message.includes('"code":403') ||
+      message.includes('"code":400');
+    if (isAuthOrBilling) {
+      permanentlyUnavailableError = message;
+      res.status(403).json({ error: message });
+      return;
+    }
     res.status(502).json({ error: message });
   }
 });

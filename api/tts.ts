@@ -11,6 +11,7 @@ interface VercelResponse extends ServerResponse {
 }
 
 const audioCache = new Map<string, { audioBase64: string; mimeType: string }>();
+let permanentlyUnavailableError: string | null = null;
 
 async function readJsonBody(req: VercelRequest): Promise<Record<string, unknown>> {
   if (req.body && typeof req.body === 'object') {
@@ -58,6 +59,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
   if (!apiKey) {
     res.status(503).json({ error: 'GEMINI_API_KEY_NOT_CONFIGURED' });
+    return;
+  }
+
+  if (permanentlyUnavailableError) {
+    res.status(403).json({ error: permanentlyUnavailableError });
     return;
   }
 
@@ -123,6 +129,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(200).json(payload);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'TTS_GENERATION_FAILED';
+    const isAuthOrBilling =
+      message.includes('PERMISSION_DENIED') ||
+      message.includes('API_KEY_INVALID') ||
+      message.includes('"code":403') ||
+      message.includes('"code":400');
+    if (isAuthOrBilling) {
+      permanentlyUnavailableError = message;
+      res.status(403).json({ error: message });
+      return;
+    }
     res.status(502).json({ error: message });
   }
 }
