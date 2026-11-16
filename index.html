@@ -1049,9 +1049,14 @@
       }
 
       // =========================================================
-      // 3. VOZ EN FRANCÉS (SIN CONEXIÓN)
+      // 3. VOZ EN FRANCÉS (GEMINI TTS + RESPALDO NAVEGADOR)
       // =========================================================
       let speaking = false;
+      let playToken = 0;
+      let currentAudio = null;
+      let ttsEndpointUnavailable = false;
+      const ttsAudioCache = new Map();
+
       function getFrenchVoice() {
         if (!('speechSynthesis' in window)) return null;
         const voices = window.speechSynthesis.getVoices();
@@ -1064,22 +1069,131 @@
         getFrenchVoice();
         window.speechSynthesis.onvoiceschanged = () => getFrenchVoice();
       }
-      function speakFr(text, rate = 0.95) {
-        if (!('speechSynthesis' in window)) return;
+      function updateSpeakButtons() {
+        const btn = document.getElementById('speakMainBtn');
+        if (btn) btn.textContent = speaking ? '🔊 Reproduciendo...' : '🔊 Escuchar';
+      }
+      function stopSpeaking() {
+        playToken += 1;
+        if (currentAudio) {
+          try {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+          } catch {}
+          currentAudio = null;
+        }
+        if ('speechSynthesis' in window) {
+          try { window.speechSynthesis.cancel(); } catch {}
+        }
+        speaking = false;
+        updateSpeakButtons();
+      }
+      function speakWithBrowser(text, rate, token) {
+        if (token !== playToken || !('speechSynthesis' in window)) {
+          if (token === playToken) { speaking = false; updateSpeakButtons(); }
+          return;
+        }
         try {
           window.speechSynthesis.cancel();
           const u = new SpeechSynthesisUtterance(text);
           const v = getFrenchVoice();
           if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'fr-FR'; }
           u.rate = rate;
-          u.onstart = () => { speaking = true; updateSpeakButtons(); };
-          u.onend = u.onerror = () => { speaking = false; updateSpeakButtons(); };
+          u.onstart = () => { if (token === playToken) { speaking = true; updateSpeakButtons(); } };
+          u.onend = u.onerror = () => { if (token === playToken) { speaking = false; updateSpeakButtons(); } };
           window.speechSynthesis.speak(u);
-        } catch (e) {}
+        } catch {
+          if (token === playToken) { speaking = false; updateSpeakButtons(); }
+        }
       }
-      function updateSpeakButtons() {
-        const btn = document.getElementById('speakMainBtn');
-        if (btn) btn.textContent = speaking ? '🔊 Reproduciendo...' : '🔊 Escuchar';
+      function base64ToBlobUrl(b64, mime) {
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return URL.createObjectURL(new Blob([bytes], { type: mime || 'audio/wav' }));
+      }
+      async function playAudioUrl(url, rate, token, fallbackText) {
+        if (token !== playToken) return;
+        try {
+          const audio = new Audio(url);
+          currentAudio = audio;
+          audio.playbackRate = rate;
+          if ('preservesPitch' in audio) audio.preservesPitch = true;
+          audio.onended = () => {
+            if (currentAudio === audio) currentAudio = null;
+            if (token === playToken) { speaking = false; updateSpeakButtons(); }
+          };
+          audio.onerror = () => {
+            if (currentAudio === audio) currentAudio = null;
+            speakWithBrowser(fallbackText, rate, token);
+          };
+          speaking = true;
+          updateSpeakButtons();
+          await audio.play();
+        } catch {
+          if (currentAudio) currentAudio = null;
+          speakWithBrowser(fallbackText, rate, token);
+        }
+      }
+      async function speakFr(text, rate = 0.95) {
+        const clean = String(text || '').trim();
+        if (!clean) return;
+        stopSpeaking();
+        const token = playToken;
+
+        const cachedUrl = ttsAudioCache.get(clean);
+        if (cachedUrl) {
+          await playAudioUrl(cachedUrl, rate, token, clean);
+          return;
+        }
+
+        const canTryRemote = navigator.onLine !== false && window.location.protocol !== 'file:' && !ttsEndpointUnavailable;
+        if (!canTryRemote) {
+          speakWithBrowser(clean, rate, token);
+          return;
+        }
+
+        speaking = true;
+        updateSpeakButtons();
+        const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : null;
+        try {
+          const res = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: clean }),
+            signal: ctrl ? ctrl.signal : undefined
+          });
+          if (timer) clearTimeout(timer);
+          if (token !== playToken) return;
+
+          if (!res.ok) {
+            if (res.status === 404 || res.status === 503) ttsEndpointUnavailable = true;
+            speakWithBrowser(clean, rate, token);
+            return;
+          }
+
+          const data = await res.json();
+          if (token !== playToken) return;
+          if (!data || !data.audioBase64) {
+            speakWithBrowser(clean, rate, token);
+            return;
+          }
+
+          const url = base64ToBlobUrl(data.audioBase64, data.mimeType || 'audio/wav');
+          if (ttsAudioCache.size >= 150) {
+            const firstKey = ttsAudioCache.keys().next().value;
+            if (firstKey) {
+              URL.revokeObjectURL(ttsAudioCache.get(firstKey));
+              ttsAudioCache.delete(firstKey);
+            }
+          }
+          ttsAudioCache.set(clean, url);
+          await playAudioUrl(url, rate, token, clean);
+        } catch {
+          if (timer) clearTimeout(timer);
+          speakWithBrowser(clean, rate, token);
+        }
       }
 
       // =========================================================
@@ -1177,7 +1291,7 @@
 
       function startNewSession(focusInput = true) {
         stopTimer();
-        if ('speechSynthesis' in window) try { window.speechSynthesis.cancel(); } catch {}
+        stopSpeaking();
         question = generateQuestion(activeVerbs(), activeTenses());
         userInput = '';
         timeLeftMs = 20000;
@@ -1243,7 +1357,7 @@
       }
 
       function nextQuestion() {
-        if ('speechSynthesis' in window) try { window.speechSynthesis.cancel(); } catch {}
+        stopSpeaking();
         const targetLen = overrideVerbs ? Math.max(6, overrideVerbs.length * 2) : state.config.sessionLen;
         if (targetLen > 0 && sessionAttempts.length >= targetLen) {
           sessionComplete = true;
