@@ -735,7 +735,23 @@
           es: esEr('com'),
           note: 'Conserva la «e» delante de «a» y «o» (nous mangeons, je mangeais).'
         },
-        { id: 'aimer', inf: 'aimer', esInf: 'amar / gustar', aux: 'avoir', pp: 'aimé', fr: frEr('aim'), es: esAr('am'), note: 'En francés significa tanto «amar» como «gustar» (j’aime = amo / me gusta).' },
+        {
+          id: 'aimer', inf: 'aimer', esInf: 'gustar / amar', aux: 'avoir', pp: 'aimé', fr: frEr('aim'),
+          es: {
+            present: ['me gusta', 'te gusta', 'le gusta', 'nos gusta', 'os gusta', 'les gusta'],
+            passe_simple: ['me gustó', 'te gustó', 'le gustó', 'nos gustó', 'os gustó', 'les gustó'],
+            passe_compose: ['me ha gustado', 'te ha gustado', 'le ha gustado', 'nos ha gustado', 'os ha gustado', 'les ha gustado'],
+            imparfait: ['me gustaba', 'te gustaba', 'le gustaba', 'nos gustaba', 'os gustaba', 'les gustaba'],
+            plus_que_parfait: ['me había gustado', 'te había gustado', 'le había gustado', 'nos había gustado', 'os había gustado', 'les había gustado'],
+            futur_simple: ['me gustará', 'te gustará', 'le gustará', 'nos gustará', 'os gustará', 'les gustará'],
+            futur_anterieur: ['me habrá gustado', 'te habrá gustado', 'le habrá gustado', 'nos habrá gustado', 'os habrá gustado', 'les habrá gustado'],
+            conditionnel_present: ['me gustaría', 'te gustaría', 'le gustaría', 'nos gustaría', 'os gustaría', 'les gustaría'],
+            conditionnel_passe: ['me habría gustado', 'te habría gustado', 'le habría gustado', 'nos habría gustado', 'os habría gustado', 'les habría gustado'],
+            subjonctif_present: ['me guste', 'te guste', 'le guste', 'nos guste', 'os guste', 'les guste'],
+            imperatif: ['ama', 'amemos', 'amad']
+          },
+          note: 'En francés «aimer» se conjuga con el sujeto de la persona que siente el gusto (j’aime = me gusta, tu aimes = te gusta...); también significa amar.'
+        },
         { id: 'finir', inf: 'finir', esInf: 'terminar', aux: 'avoir', pp: 'fini', fr: frIr2('fin'), es: esAr('termin'), note: 'Modelo del 2.º grupo (-ir): añade -iss- en plural del presente e imperfecto.' },
         {
           id: 'choisir', inf: 'choisir', esInf: 'elegir', aux: 'avoir', pp: 'choisi', fr: frIr2('chois'),
