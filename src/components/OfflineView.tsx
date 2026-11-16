@@ -37,7 +37,7 @@ export const OfflineView: React.FC<OfflineViewProps> = ({
 
   const testOfflineAudio = () => {
     speakFrench('Bonjour, je suis prêt à pratiquer sans connexion.', {
-      rate: 0.92,
+      rate: 1.0,
       onStart: () => setTestingAudio(true),
       onEnd: () => setTestingAudio(false),
     });

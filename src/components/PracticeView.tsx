@@ -109,7 +109,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeVerbIds.join(','), activeTenseIds.join(','), config.sessionLength]);
 
-  const handleTriggerSpeak = useCallback((text: string, rate = 0.95) => {
+  const handleTriggerSpeak = useCallback((text: string, rate = 1.0) => {
     speakFrench(text, {
       rate,
       onStart: () => setIsSpeaking(true),
@@ -154,7 +154,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
       setSessionAttempts((prev) => [...prev, attempt]);
 
       if (config.autoSpeak) {
-        handleTriggerSpeak(question.canonicalFrench, 0.95);
+        handleTriggerSpeak(question.canonicalFrench, 1.0);
       }
     },
     [config.autoSpeak, handleTriggerSpeak, onRecordAttempt, question, sessionStreak]
@@ -347,7 +347,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
                   {isSpeechSupported() && (
                     <button
                       type="button"
-                      onClick={() => handleTriggerSpeak(item.canonicalFrench, 0.9)}
+                      onClick={() => handleTriggerSpeak(item.canonicalFrench, 1.0)}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                     >
                       <Volume2 className="h-3.5 w-3.5" />
@@ -598,7 +598,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleTriggerSpeak(question.canonicalFrench, 0.95)}
+                    onClick={() => handleTriggerSpeak(question.canonicalFrench, 1.0)}
                     className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                       isSpeaking
                         ? 'border-blue-600 bg-blue-50 text-blue-800'
@@ -610,11 +610,11 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleTriggerSpeak(question.canonicalFrench, 0.7)}
+                    onClick={() => handleTriggerSpeak(question.canonicalFrench, 0.5)}
                     title="Escuchar más despacio"
                     className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer whitespace-nowrap shrink-0 tabular-nums"
                   >
-                    0.7× Lento
+                    0.5× Lento
                   </button>
                 </div>
               </div>

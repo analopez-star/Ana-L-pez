@@ -159,7 +159,11 @@ function speakWithBrowser(
     } else {
       utterance.lang = 'fr-FR';
     }
-    utterance.rate = rate;
+    const effectiveRate =
+      rate < 0.8
+        ? Math.max(0.35, Math.min(0.5, rate - 0.05))
+        : Math.max(0.5, Math.min(2.0, rate));
+    utterance.rate = effectiveRate;
     utterance.pitch = 1;
     utterance.volume = 1;
 
@@ -196,9 +200,10 @@ function speakWithBrowser(
 
     options?.onStart?.();
     if (speakSafetyTimer !== null) window.clearTimeout(speakSafetyTimer);
+    const safetyMs = Math.max(7000, Math.round(7000 / Math.max(0.35, effectiveRate)));
     speakSafetyTimer = window.setTimeout(() => {
       if (token === playToken) options?.onEnd?.();
-    }, 7000);
+    }, safetyMs);
 
     synth.speak(utterance);
   } catch {
@@ -256,10 +261,30 @@ async function playBlobUrl(
   try {
     const audio = new Audio(url);
     currentAudio = audio;
+    audio.defaultPlaybackRate = rate;
     audio.playbackRate = rate;
-    if ('preservesPitch' in audio) {
-      (audio as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
-    }
+    const pitchedAudio = audio as HTMLAudioElement & {
+      preservesPitch?: boolean;
+      webkitPreservesPitch?: boolean;
+      mozPreservesPitch?: boolean;
+    };
+    if ('preservesPitch' in pitchedAudio) pitchedAudio.preservesPitch = true;
+    if ('webkitPreservesPitch' in pitchedAudio) pitchedAudio.webkitPreservesPitch = true;
+    if ('mozPreservesPitch' in pitchedAudio) pitchedAudio.mozPreservesPitch = true;
+    audio.onloadedmetadata = () => {
+      try {
+        audio.playbackRate = rate;
+      } catch {
+        // ignore
+      }
+    };
+    audio.onplay = () => {
+      try {
+        audio.playbackRate = rate;
+      } catch {
+        // ignore
+      }
+    };
     audio.onended = () => {
       if (currentAudio === audio) currentAudio = null;
       if (token === playToken) options?.onEnd?.();
@@ -270,6 +295,11 @@ async function playBlobUrl(
     };
     options?.onStart?.();
     await audio.play();
+    try {
+      audio.playbackRate = rate;
+    } catch {
+      // ignore
+    }
   } catch {
     if (currentAudio) currentAudio = null;
     speakWithBrowser(fallbackText, rate, token, options);
@@ -355,7 +385,7 @@ export async function speakFrench(
   options?: { rate?: number; onStart?: () => void; onEnd?: () => void }
 ): Promise<void> {
   const clean = text.trim();
-  const rate = options?.rate ?? 0.95;
+  const rate = options?.rate ?? 1.0;
   if (!clean) {
     options?.onEnd?.();
     return;
@@ -366,7 +396,7 @@ export async function speakFrench(
   const token = playToken;
 
   const cachedBuf = ttsBufferCache.get(clean);
-  if (cachedBuf && (await playAudioBuffer(cachedBuf, rate, token, options))) {
+  if (rate >= 0.85 && cachedBuf && (await playAudioBuffer(cachedBuf, rate, token, options))) {
     return;
   }
 
@@ -396,7 +426,11 @@ export async function speakFrench(
     return;
   }
 
-  if (audioData.decoded && (await playAudioBuffer(audioData.decoded, rate, token, options))) {
+  if (
+    rate >= 0.85 &&
+    audioData.decoded &&
+    (await playAudioBuffer(audioData.decoded, rate, token, options))
+  ) {
     return;
   }
   await playBlobUrl(audioData.blobUrl, rate, token, clean, options);
