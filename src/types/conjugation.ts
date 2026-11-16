@@ -38,6 +38,7 @@ export interface VerbDefinition {
   spanishInfinitive: string;
   level: 'basico' | 'intermedio' | 'avanzado';
   impersonal?: boolean;
+  reflexive?: boolean;
   auxiliary: 'avoir' | 'être';
   participePasse: string;
   /** French forms for simple tenses: arrays of 6 [je, tu, il/elle/on, nous, vous, ils/elles] or single string for impersonal */
@@ -49,6 +50,14 @@ export interface VerbDefinition {
     subjonctif_present: string[] | string;
     imperatif?: [string, string, string]; // [tu, nous, vous]
   };
+  altFr?: Partial<{
+    present: string[];
+    imparfait: string[];
+    futur_simple: string[];
+    conditionnel_present: string[];
+    subjonctif_present: string[];
+    imperatif: [string, string, string];
+  }>;
   /** Spanish forms for each TenseId */
   es: {
     present: string[] | string;

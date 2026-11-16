@@ -20,8 +20,31 @@ const ETRE_FUTUR = ['serai', 'seras', 'sera', 'serons', 'serez', 'seront'];
 const ETRE_COND = ['serais', 'serais', 'serait', 'serions', 'seriez', 'seraient'];
 
 const STARTS_WITH_VOWEL_OR_MUTE_H = /^[aeiouyàâäéèêëîïôöùûüœæh]/i;
+const REFL_PRON: Record<string, string> = {
+  je: 'me',
+  tu: 'te',
+  il: 'se',
+  elle: 'se',
+  on: 'se',
+  nous: 'nous',
+  vous: 'vous',
+  ils: 'se',
+  elles: 'se',
+};
 
-export function combinePronounAndVerb(pronoun: string, verbForm: string): string {
+export function combinePronounAndVerb(
+  pronoun: string,
+  verbForm: string,
+  reflexive = false
+): string {
+  if (reflexive) {
+    const rp = REFL_PRON[pronoun] ?? 'se';
+    const joined =
+      (rp === 'me' || rp === 'te' || rp === 'se') && STARTS_WITH_VOWEL_OR_MUTE_H.test(verbForm)
+        ? `${rp[0]}'${verbForm}`
+        : `${rp} ${verbForm}`;
+    return `${pronoun} ${joined}`;
+  }
   if (pronoun === 'je' && STARTS_WITH_VOWEL_OR_MUTE_H.test(verbForm)) {
     return `j'${verbForm}`;
   }
@@ -100,6 +123,30 @@ function buildImpersonalFrench(verb: VerbDefinition, frenchKey: FrenchTenseKey):
         return 'il y ait';
       default:
         return 'il y a';
+    }
+  }
+  if (verb.id === 'neiger') {
+    switch (frenchKey) {
+      case 'present':
+        return 'il neige';
+      case 'passe_compose':
+        return 'il a neigé';
+      case 'imparfait':
+        return 'il neigeait';
+      case 'plus_que_parfait':
+        return 'il avait neigé';
+      case 'futur_simple':
+        return 'il neigera';
+      case 'futur_anterieur':
+        return 'il aura neigé';
+      case 'conditionnel_present':
+        return 'il neigerait';
+      case 'conditionnel_passe':
+        return 'il aurait neigé';
+      case 'subjonctif_present':
+        return 'il neige';
+      default:
+        return 'il neige';
     }
   }
   // falloir
@@ -210,6 +257,11 @@ export function generateQuestion(
     const esImpForm = verb.es.imperatif[impIdx];
     const frImpForm = verb.fr.imperatif[impIdx];
     const esHint = impIdx === 0 ? 'tú' : impIdx === 1 ? 'nosotros/as' : 'vosotros/as';
+    const accepted = [frImpForm];
+    const altImp = verb.altFr?.imperatif?.[impIdx];
+    if (altImp && !accepted.includes(altImp)) {
+      accepted.push(altImp);
+    }
 
     return {
       id: `${verb.id}-${tenseId}-${personIndex}-${Date.now()}`,
@@ -222,7 +274,7 @@ export function generateQuestion(
       spanishPrompt: esImpForm,
       spanishPronounHint: esHint,
       canonicalFrench: frImpForm,
-      acceptedFrenchForms: [frImpForm],
+      acceptedFrenchForms: accepted,
       grammarTip: tenseMeta.note,
       impersonal: false,
     };
@@ -285,6 +337,7 @@ export function generateQuestion(
     frenchKey === 'plus_que_parfait' ||
     frenchKey === 'futur_anterieur' ||
     frenchKey === 'conditionnel_passe';
+  const isReflexive = Boolean(verb.reflexive);
 
   let canonicalFrench = '';
   const acceptedFrenchForms: string[] = [];
@@ -292,7 +345,7 @@ export function generateQuestion(
   if (isCompound) {
     const auxForm = getAuxiliaryArray(verb.auxiliary, frenchKey)[conjugationIndex];
     const baseParticiple = verb.participePasse;
-    const prefix = combinePronounAndVerb(frenchPronoun, auxForm);
+    const prefix = combinePronounAndVerb(frenchPronoun, auxForm, isReflexive);
 
     if (verb.auxiliary === 'être') {
       if (personIndex === 2) {
@@ -337,12 +390,29 @@ export function generateQuestion(
   } else {
     const frSimpleArray = verb.fr[frenchKey as keyof typeof verb.fr] as string[];
     const frVerbForm = frSimpleArray[conjugationIndex];
-    canonicalFrench = combinePronounAndVerb(frenchPronoun, frVerbForm);
+    canonicalFrench = combinePronounAndVerb(frenchPronoun, frVerbForm, isReflexive);
     acceptedFrenchForms.push(canonicalFrench);
+
+    const altArray = verb.altFr?.[frenchKey as keyof NonNullable<VerbDefinition['altFr']>];
+    if (Array.isArray(altArray)) {
+      const altForm = combinePronounAndVerb(
+        frenchPronoun,
+        altArray[conjugationIndex],
+        isReflexive
+      );
+      if (!acceptedFrenchForms.includes(altForm)) {
+        acceptedFrenchForms.push(altForm);
+      }
+    }
 
     if (frenchKey === 'subjonctif_present') {
       const quePrefix = STARTS_WITH_VOWEL_OR_MUTE_H.test(frenchPronoun) ? "qu'" : 'que ';
-      acceptedFrenchForms.push(`${quePrefix}${canonicalFrench}`);
+      for (const form of [...acceptedFrenchForms]) {
+        const withQue = `${quePrefix}${form}`;
+        if (!acceptedFrenchForms.includes(withQue)) {
+          acceptedFrenchForms.push(withQue);
+        }
+      }
     }
   }
 

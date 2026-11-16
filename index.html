@@ -735,7 +735,7 @@
           es: esEr('com'),
           note: 'Conserva la «e» delante de «a» y «o» (nous mangeons, je mangeais).'
         },
-        { id: 'aimer', inf: 'aimer', esInf: 'amar', aux: 'avoir', pp: 'aimé', fr: frEr('aim'), es: esAr('am') },
+        { id: 'aimer', inf: 'aimer', esInf: 'amar / gustar', aux: 'avoir', pp: 'aimé', fr: frEr('aim'), es: esAr('am'), note: 'En francés significa tanto «amar» como «gustar» (j’aime = amo / me gusta).' },
         { id: 'finir', inf: 'finir', esInf: 'terminar', aux: 'avoir', pp: 'fini', fr: frIr2('fin'), es: esAr('termin'), note: 'Modelo del 2.º grupo (-ir): añade -iss- en plural del presente e imperfecto.' },
         {
           id: 'choisir', inf: 'choisir', esInf: 'elegir', aux: 'avoir', pp: 'choisi', fr: frIr2('chois'),
@@ -870,6 +870,67 @@
           id: 'vivre', inf: 'vivre', esInf: 'vivir', aux: 'avoir', pp: 'vécu',
           fr: { present: ['vis', 'vis', 'vit', 'vivons', 'vivez', 'vivent'], imparfait: frImp('viv'), futur_simple: frFut('vivr'), conditionnel_present: frCond('vivr'), subjonctif_present: ['vive', 'vives', 'vive', 'vivions', 'viviez', 'vivent'], imperatif: ['vis', 'vivons', 'vivez'] },
           es: esIr('viv')
+        },
+        {
+          id: 'envoyer', inf: 'envoyer', esInf: 'enviar', aux: 'avoir', pp: 'envoyé',
+          fr: { present: ['envoie', 'envoies', 'envoie', 'envoyons', 'envoyez', 'envoient'], imparfait: frImp('envoy'), futur_simple: frFut('enverr'), conditionnel_present: frCond('enverr'), subjonctif_present: ['envoie', 'envoies', 'envoie', 'envoyions', 'envoyiez', 'envoient'], imperatif: ['envoie', 'envoyons', 'envoyez'] },
+          es: { present: ['envío', 'envías', 'envía', 'enviamos', 'enviáis', 'envían'], passe_simple: ['envié', 'enviaste', 'envió', 'enviamos', 'enviasteis', 'enviaron'], passe_compose: esC(H_PRES, 'enviado'), imparfait: ['enviaba', 'enviabas', 'enviaba', 'enviábamos', 'enviabais', 'enviaban'], plus_que_parfait: esC(H_IMP, 'enviado'), futur_simple: ['enviaré', 'enviarás', 'enviará', 'enviaremos', 'enviaréis', 'enviarán'], futur_anterieur: esC(H_FUT, 'enviado'), conditionnel_present: ['enviaría', 'enviarías', 'enviaría', 'enviaríamos', 'enviaríais', 'enviarían'], conditionnel_passe: esC(H_COND, 'enviado'), subjonctif_present: ['envíe', 'envíes', 'envíe', 'enviemos', 'enviéis', 'envíen'], imperatif: ['envía', 'enviemos', 'enviad'] },
+          note: 'Cambia «y» por «i» ante «e» muda (j’envoie) y usa raíz irregular «enverr-» en futuro/condicional.'
+        },
+        {
+          id: 'payer', inf: 'payer', esInf: 'pagar', aux: 'avoir', pp: 'payé',
+          fr: { present: ['paie', 'paies', 'paie', 'payons', 'payez', 'paient'], imparfait: frImp('pay'), futur_simple: frFut('paier'), conditionnel_present: frCond('paier'), subjonctif_present: ['paie', 'paies', 'paie', 'payions', 'payiez', 'paient'], imperatif: ['paie', 'payons', 'payez'] },
+          altFr: { present: ['paye', 'payes', 'paye', 'payons', 'payez', 'payent'], futur_simple: frFut('payer'), conditionnel_present: frCond('payer'), subjonctif_present: ['paye', 'payes', 'paye', 'payions', 'payiez', 'payent'], imperatif: ['paye', 'payons', 'payez'] },
+          es: { present: ['pago', 'pagas', 'paga', 'pagamos', 'pagáis', 'pagan'], passe_simple: ['pagué', 'pagaste', 'pagó', 'pagamos', 'pagasteis', 'pagaron'], passe_compose: esC(H_PRES, 'pagado'), imparfait: ['pagaba', 'pagabas', 'pagaba', 'pagábamos', 'pagabais', 'pagaban'], plus_que_parfait: esC(H_IMP, 'pagado'), futur_simple: ['pagaré', 'pagarás', 'pagará', 'pagaremos', 'pagaréis', 'pagarán'], futur_anterieur: esC(H_FUT, 'pagado'), conditionnel_present: ['pagaría', 'pagarías', 'pagaría', 'pagaríamos', 'pagaríais', 'pagarían'], conditionnel_passe: esC(H_COND, 'pagado'), subjonctif_present: ['pague', 'pagues', 'pague', 'paguemos', 'paguéis', 'paguen'], imperatif: ['paga', 'paguemos', 'pagad'] },
+          note: 'En -ayer son válidas ambas formas: «je paie» / «je paye» y en futuro «je paierai» / «je payerai».'
+        },
+        {
+          id: 'commencer', inf: 'commencer', esInf: 'empezar / comenzar', aux: 'avoir', pp: 'commencé',
+          fr: { present: ['commence', 'commences', 'commence', 'commençons', 'commencez', 'commencent'], imparfait: ['commençais', 'commençais', 'commençait', 'commencions', 'commenciez', 'commençaient'], futur_simple: frFut('commencer'), conditionnel_present: frCond('commencer'), subjonctif_present: ['commence', 'commences', 'commence', 'commencions', 'commenciez', 'commencent'], imperatif: ['commence', 'commençons', 'commencez'] },
+          es: { present: ['empiezo', 'empiezas', 'empieza', 'empezamos', 'empezáis', 'empiezan'], passe_simple: ['empecé', 'empezaste', 'empezó', 'empezamos', 'empezasteis', 'empezaron'], passe_compose: esC(H_PRES, 'empezado'), imparfait: ['empezaba', 'empezabas', 'empezaba', 'empezábamos', 'empezabais', 'empezaban'], plus_que_parfait: esC(H_IMP, 'empezado'), futur_simple: ['empezaré', 'empezarás', 'empezará', 'empezaremos', 'empezaréis', 'empezarán'], futur_anterieur: esC(H_FUT, 'empezado'), conditionnel_present: ['empezaría', 'empezarías', 'empezaría', 'empezaríamos', 'empezaríais', 'empezarían'], conditionnel_passe: esC(H_COND, 'empezado'), subjonctif_present: ['empiece', 'empieces', 'empiece', 'empecemos', 'empecéis', 'empiecen'], imperatif: ['empieza', 'empecemos', 'empezad'] },
+          note: 'Cambia «c» por «ç» delante de «a» y «o» (nous commençons, je commençais).'
+        },
+        {
+          id: 'nager', inf: 'nager', esInf: 'nadar', aux: 'avoir', pp: 'nagé',
+          fr: { present: ['nage', 'nages', 'nage', 'nageons', 'nagez', 'nagent'], imparfait: ['nageais', 'nageais', 'nageait', 'nagions', 'nagiez', 'nageaient'], futur_simple: frFut('nager'), conditionnel_present: frCond('nager'), subjonctif_present: ['nage', 'nages', 'nage', 'nagions', 'nagiez', 'nagent'], imperatif: ['nage', 'nageons', 'nagez'] },
+          es: esAr('nad'),
+          note: 'Conserva la «e» delante de «a» y «o» para mantener el sonido suave (nous nageons, je nageais).'
+        },
+        {
+          id: 'neiger', inf: 'neiger', esInf: 'nevar', impersonal: true, aux: 'avoir', pp: 'neigé',
+          fr: { present: 'il neige', imparfait: 'il neigeait', futur_simple: 'il neigera', conditionnel_present: 'il neigerait', subjonctif_present: 'il neige' },
+          es: { present: 'nieva', passe_simple: 'nevó', passe_compose: 'ha nevado', imparfait: 'nevaba', plus_que_parfait: 'había nevado', futur_simple: 'nevará', futur_anterieur: 'habrá nevado', conditionnel_present: 'nevaría', conditionnel_passe: 'habría nevado', subjonctif_present: 'nieve' },
+          note: 'Verbo meteorológico impersonal (solo 3.ª persona «il»). En compuestos usa «avoir» (il a neigé).'
+        },
+        {
+          id: 'se_lever', inf: 'se lever', esInf: 'levantarse', reflexive: true, aux: 'être', pp: 'levé',
+          fr: { present: ['lève', 'lèves', 'lève', 'levons', 'levez', 'lèvent'], imparfait: frImp('lev'), futur_simple: frFut('lèver'), conditionnel_present: frCond('lèver'), subjonctif_present: ['lève', 'lèves', 'lève', 'levions', 'leviez', 'lèvent'], imperatif: ['lève-toi', 'levons-nous', 'levez-vous'] },
+          es: {
+            present: ['me levanto', 'te levantas', 'se levanta', 'nos levantamos', 'os levantáis', 'se levantan'],
+            passe_simple: ['me levanté', 'te levantaste', 'se levantó', 'nos levantamos', 'os levantasteis', 'se levantaron'],
+            passe_compose: ['me he levantado', 'te has levantado', 'se ha levantado', 'nos hemos levantado', 'os habéis levantado', 'se han levantado'],
+            imparfait: ['me levantaba', 'te levantabas', 'se levantaba', 'nos levantábamos', 'os levantabais', 'se levantaban'],
+            plus_que_parfait: ['me había levantado', 'te habías levantado', 'se había levantado', 'nos habíamos levantado', 'os habíais levantado', 'se habían levantado'],
+            futur_simple: ['me levantaré', 'te levantarás', 'se levantará', 'nos levantaremos', 'os levantaréis', 'se levantarán'],
+            futur_anterieur: ['me habré levantado', 'te habrás levantado', 'se habrá levantado', 'nos habremos levantado', 'os habréis levantado', 'se habrán levantado'],
+            conditionnel_present: ['me levantaría', 'te levantarías', 'se levantaría', 'nos levantaríamos', 'os levantaríais', 'se levantarían'],
+            conditionnel_passe: ['me habría levantado', 'te habrías levantado', 'se habría levantado', 'nos habríamos levantado', 'os habríais levantado', 'se habrían levantado'],
+            subjonctif_present: ['me levante', 'te levantes', 'se levante', 'nos levantemos', 'os levantéis', 'se levanten'],
+            imperatif: ['levántate', 'levantémonos', 'levantaos']
+          },
+          note: 'Verbo pronominal: usa el pronombre reflexivo (me, te, se, nous, vous, se), cambia «e»→«è» (je me lève) y forma los compuestos con «être».'
+        },
+        {
+          id: 'preferer', inf: 'préférer', esInf: 'preferir', aux: 'avoir', pp: 'préféré',
+          fr: { present: ['préfère', 'préfères', 'préfère', 'préférons', 'préférez', 'préfèrent'], imparfait: frImp('préfér'), futur_simple: frFut('préférer'), conditionnel_present: frCond('préférer'), subjonctif_present: ['préfère', 'préfères', 'préfère', 'préférions', 'préfériez', 'préfèrent'], imperatif: ['préfère', 'préférons', 'préférez'] },
+          es: { present: ['prefiero', 'prefieres', 'prefiere', 'preferimos', 'preferís', 'prefieren'], passe_simple: ['preferí', 'preferiste', 'prefirió', 'preferimos', 'preferisteis', 'prefirieron'], passe_compose: esC(H_PRES, 'preferido'), imparfait: ['prefería', 'preferías', 'prefería', 'preferíamos', 'preferíais', 'preferían'], plus_que_parfait: esC(H_IMP, 'preferido'), futur_simple: ['preferiré', 'preferirás', 'preferirá', 'preferiremos', 'preferiréis', 'preferirán'], futur_anterieur: esC(H_FUT, 'preferido'), conditionnel_present: ['preferiría', 'preferirías', 'preferiría', 'preferiríamos', 'preferiríais', 'preferirían'], conditionnel_passe: esC(H_COND, 'preferido'), subjonctif_present: ['prefiera', 'prefieras', 'prefiera', 'prefiramos', 'prefiráis', 'prefieran'], imperatif: ['prefiere', 'prefiramos', 'preferid'] },
+          note: 'Cambia «é»→«è» ante sílaba muda (je préfère), pero mantiene «é» en futuro y condicional (je préférerai).'
+        },
+        {
+          id: 'acheter', inf: 'acheter', esInf: 'comprar', aux: 'avoir', pp: 'acheté',
+          fr: { present: ['achète', 'achètes', 'achète', 'achetons', 'achetez', 'achètent'], imparfait: frImp('achet'), futur_simple: frFut('achèter'), conditionnel_present: frCond('achèter'), subjonctif_present: ['achète', 'achètes', 'achète', 'achetions', 'achetiez', 'achètent'], imperatif: ['achète', 'achetons', 'achetez'] },
+          es: esAr('compr'),
+          note: 'Cambia «e»→«è» ante sílaba muda (j’achète) y también en futuro y condicional (j’achèterai).'
         }
       ];
 
@@ -878,7 +939,7 @@
       const PRESETS = [
         { label: 'Esenciales', ids: ['y_avoir', 'falloir', 'etre', 'avoir', 'aller', 'faire', 'parler', 'manger', 'aimer', 'finir', 'choisir'] },
         { label: 'Irregulares clave', ids: ['etre', 'avoir', 'aller', 'faire', 'pouvoir', 'vouloir', 'devoir', 'savoir', 'voir', 'venir', 'prendre', 'mettre', 'dire'] },
-        { label: 'Impersonales (il y a / il faut)', ids: ['y_avoir', 'falloir'] },
+        { label: 'Impersonales (il y a / il faut / neiger)', ids: ['y_avoir', 'falloir', 'neiger'] },
         { label: 'Todos', ids: VERBS.map(v => v.id) }
       ];
 
@@ -913,7 +974,15 @@
       };
 
       const VOWEL_RE = /^[aeiouyàâäéèêëîïôöùûüœæh]/i;
-      const combinePron = (p, v) => (p === 'je' && VOWEL_RE.test(v)) ? `j'${v}` : `${p} ${v}`;
+      const REFL_PRON = { je: 'me', tu: 'te', il: 'se', elle: 'se', on: 'se', nous: 'nous', vous: 'vous', ils: 'se', elles: 'se' };
+      const combinePron = (p, v, reflexive = false) => {
+        if (reflexive) {
+          const rp = REFL_PRON[p] || 'se';
+          const joined = ((rp === 'me' || rp === 'te' || rp === 'se') && VOWEL_RE.test(v)) ? `${rp[0]}'${v}` : `${rp} ${v}`;
+          return `${p} ${joined}`;
+        }
+        return (p === 'je' && VOWEL_RE.test(v)) ? `j'${v}` : `${p} ${v}`;
+      };
       const isValidPair = (verb, tenseId) => tenseId !== 'imperatif' || (!verb.impersonal && Boolean(verb.fr.imperatif));
 
       function countValidPairs(vIds, tIds) {
@@ -929,6 +998,9 @@
       function buildImpersonalFr(verbId, frKey) {
         if (verbId === 'y_avoir') {
           return { present: 'il y a', passe_compose: 'il y a eu', imparfait: 'il y avait', plus_que_parfait: 'il y avait eu', futur_simple: 'il y aura', futur_anterieur: 'il y aura eu', conditionnel_present: 'il y aurait', conditionnel_passe: 'il y aurait eu', subjonctif_present: 'il y ait' }[frKey] || 'il y a';
+        }
+        if (verbId === 'neiger') {
+          return { present: 'il neige', passe_compose: 'il a neigé', imparfait: 'il neigeait', plus_que_parfait: 'il avait neigé', futur_simple: 'il neigera', futur_anterieur: 'il aura neigé', conditionnel_present: 'il neigerait', conditionnel_passe: 'il aurait neigé', subjonctif_present: 'il neige' }[frKey] || 'il neige';
         }
         return { present: 'il faut', passe_compose: 'il a fallu', imparfait: 'il fallait', plus_que_parfait: 'il avait fallu', futur_simple: 'il faudra', futur_anterieur: 'il aura fallu', conditionnel_present: 'il faudrait', conditionnel_passe: 'il aurait fallu', subjonctif_present: 'il faille' }[frKey] || 'il faut';
       }
@@ -964,11 +1036,15 @@
         if (tenseId === 'imperatif') {
           const idx = Math.floor(Math.random() * 3);
           const hints = ['tú', 'nosotros/as', 'vosotros/as'];
+          const canonical = verb.fr.imperatif[idx];
+          const accepted = [canonical];
+          const altForm = verb.altFr && verb.altFr.imperatif ? verb.altFr.imperatif[idx] : null;
+          if (altForm && !accepted.includes(altForm)) accepted.push(altForm);
           return {
             id: `${verb.id}-${tenseId}-${idx}-${Date.now()}`,
             verbId: verb.id, inf: verb.inf, esInf: verb.esInf, tenseId, frKey,
             esPrompt: verb.es.imperatif[idx], esHint: hints[idx],
-            canonical: verb.fr.imperatif[idx], accepted: [verb.fr.imperatif[idx]],
+            canonical, accepted,
             tip: tMeta.note, impersonal: false
           };
         }
@@ -987,12 +1063,13 @@
         else if (pIdx === 5) { if (Math.random() < 0.5) { frPron = 'ils'; esPron = 'ellos'; } else { frPron = 'elles'; esPron = 'ellas'; fem = true; } }
 
         const isCompound = ['passe_compose', 'plus_que_parfait', 'futur_anterieur', 'conditionnel_passe'].includes(frKey);
+        const isRefl = Boolean(verb.reflexive);
         let canonical = '';
         let accepted = [];
 
         if (isCompound) {
           const auxForm = AUX_FORMS[verb.aux][frKey][conjIdx];
-          const pref = combinePron(frPron, auxForm);
+          const pref = combinePron(frPron, auxForm, isRefl);
           const pp = verb.pp;
           if (verb.aux === 'être') {
             if (pIdx === 2) { canonical = fem ? `${pref} ${pp}e` : `${pref} ${pp}`; accepted = [canonical]; }
@@ -1010,10 +1087,15 @@
             accepted = [canonical];
           }
         } else {
-          canonical = combinePron(frPron, verb.fr[frKey][conjIdx]);
+          canonical = combinePron(frPron, verb.fr[frKey][conjIdx], isRefl);
           accepted = [canonical];
+          const altForm = verb.altFr && verb.altFr[frKey] ? combinePron(frPron, verb.altFr[frKey][conjIdx], isRefl) : null;
+          if (altForm && !accepted.includes(altForm)) accepted.push(altForm);
           if (frKey === 'subjonctif_present') {
-            accepted.push((VOWEL_RE.test(frPron) ? "qu'" : 'que ') + canonical);
+            accepted.slice().forEach(form => {
+              const withQue = (VOWEL_RE.test(frPron) ? "qu'" : 'que ') + form;
+              if (!accepted.includes(withQue)) accepted.push(withQue);
+            });
           }
         }
 
