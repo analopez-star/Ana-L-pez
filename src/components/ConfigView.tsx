@@ -75,7 +75,7 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
             Configura tu sesión de práctica
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Elige los verbos en infinitivo y los tiempos verbales que quieres repasar hoy.
+            Elige los tiempos verbales y los verbos en infinitivo que quieres repasar hoy.
           </p>
         </div>
 
@@ -103,12 +103,88 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
         </div>
       )}
 
-      {/* Section 1: Infinitive Verbs */}
+      {/* Section 1: Tenses */}
       <section className="rounded-xl border border-slate-200 bg-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              1. Verbos en infinitivo ({config.selectedVerbIds.length} de {VERBS.length})
+              1. Tiempos verbales ({config.selectedTenseIds.length} de {TENSES.length})
+            </h2>
+            <p className="text-xs text-slate-500">
+              El pretérito perfecto simple y el compuesto español se responden ambos con el passé composé.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={selectEssentialTenses}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+            >
+              Básicos ESO
+            </button>
+            <button
+              type="button"
+              onClick={selectAllTenses}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+            >
+              Seleccionar todos
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-6">
+          {TENSE_MOODS.map((mood) => {
+            const moodTenses = TENSES.filter((t) => t.mood === mood);
+            return (
+              <div key={mood}>
+                <h3 className="text-xs font-semibold text-slate-500 mb-2.5">{mood}</h3>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {moodTenses.map((tense) => {
+                    const selected = config.selectedTenseIds.includes(tense.id);
+                    return (
+                      <button
+                        key={tense.id}
+                        type="button"
+                        onClick={() => toggleTense(tense.id)}
+                        className={`flex items-start justify-between gap-3 rounded-lg border p-3.5 text-left transition-colors cursor-pointer ${
+                          selected
+                            ? 'border-blue-600 bg-blue-50/60'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {tense.spanishName}
+                          </p>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {tense.frenchName}
+                          </p>
+                        </div>
+                        <span
+                          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                            selected
+                              ? 'border-blue-700 bg-blue-700 text-white'
+                              : 'border-slate-300 bg-white'
+                          }`}
+                        >
+                          {selected && <Check className="h-3 w-3" />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Section 2: Infinitive Verbs */}
+      <section className="rounded-xl border border-slate-200 bg-white p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              2. Verbos en infinitivo ({config.selectedVerbIds.length} de {VERBS.length})
             </h2>
             <p className="text-xs text-slate-500">
               Incluye los verbos más usuales e impersonales (il y a / il faut).
@@ -183,82 +259,6 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
         </div>
       </section>
 
-      {/* Section 2: Tenses */}
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              2. Tiempos verbales ({config.selectedTenseIds.length} de {TENSES.length})
-            </h2>
-            <p className="text-xs text-slate-500">
-              El pretérito perfecto simple y el compuesto español se responden ambos con el passé composé.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={selectEssentialTenses}
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer whitespace-nowrap shrink-0"
-            >
-              Básicos ESO
-            </button>
-            <button
-              type="button"
-              onClick={selectAllTenses}
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer whitespace-nowrap shrink-0"
-            >
-              Seleccionar todos
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-5 space-y-6">
-          {TENSE_MOODS.map((mood) => {
-            const moodTenses = TENSES.filter((t) => t.mood === mood);
-            return (
-              <div key={mood}>
-                <h3 className="text-xs font-semibold text-slate-500 mb-2.5">{mood}</h3>
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                  {moodTenses.map((tense) => {
-                    const selected = config.selectedTenseIds.includes(tense.id);
-                    return (
-                      <button
-                        key={tense.id}
-                        type="button"
-                        onClick={() => toggleTense(tense.id)}
-                        className={`flex items-start justify-between gap-3 rounded-lg border p-3.5 text-left transition-colors cursor-pointer ${
-                          selected
-                            ? 'border-blue-600 bg-blue-50/60'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900">
-                            {tense.spanishName}
-                          </p>
-                          <p className="mt-0.5 text-xs text-slate-500">
-                            {tense.frenchName}
-                          </p>
-                        </div>
-                        <span
-                          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                            selected
-                              ? 'border-blue-700 bg-blue-700 text-white'
-                              : 'border-slate-300 bg-white'
-                          }`}
-                        >
-                          {selected && <Check className="h-3 w-3" />}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
       {/* Section 3: Session Preferences */}
       <section className="rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-4">
@@ -296,7 +296,7 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
               <div>
                 <p className="text-sm font-medium text-slate-900">Pronunciación automática</p>
                 <p className="text-xs text-slate-500">
-                  Pronuncia el verbo en francés al comprobar o agotarse los 15 s
+                  Pronuncia el verbo en francés al comprobar o agotarse los 20 s
                 </p>
               </div>
               <input

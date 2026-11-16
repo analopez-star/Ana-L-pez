@@ -27,7 +27,7 @@ import { evaluateAnswer, generateQuestion } from '../utils/conjugationEngine';
 import { isSpeechSupported, speakFrench, stopSpeaking } from '../utils/speech';
 import { getEffectiveStreak, getLevelInfo, getLocalDateKey } from '../utils/storage';
 
-const TIMER_SECONDS = 15;
+const TIMER_SECONDS = 20;
 const FRENCH_ACCENTS = ['é', 'è', 'ê', 'à', 'ç', 'û', 'î', 'ô', 'ù', 'œ', "'"];
 
 interface PracticeViewProps {
@@ -555,7 +555,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
                   <>
                     <Clock className="h-5 w-5 text-rose-600 shrink-0" />
                     <span className="text-sm font-semibold text-rose-800">
-                      Tiempo agotado (15 s) — Solución
+                      Tiempo agotado (20 s) — Solución
                     </span>
                   </>
                 ) : (

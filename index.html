@@ -1,27 +1,2040 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Conjugo — Práctica de verbos franceses</title>
-    <meta name="description" content="Aplicación educativa para alumnos de ESO y Bachillerato para practicar la conjugación y pronunciación de verbos en francés con seguimiento de rachas, estadísticas, niveles y modo sin conexión." />
-    <meta property="og:title" content="Conjugo — Práctica de verbos franceses" />
-    <meta property="og:description" content="Aplicación educativa para alumnos de ESO y Bachillerato para practicar la conjugación y pronunciación de verbos en francés con seguimiento de rachas, estadísticas, niveles y modo sin conexión." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="theme-color" content="#1D4ED8" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Conjugo" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  </head>
-  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conjugo — Práctica de verbos franceses</title>
+  <meta name="description" content="Aplicación educativa para practicar la conjugación y pronunciación de verbos en francés con seguimiento de rachas, estadísticas, niveles y modo sin conexión." />
+  <style>
+    :root {
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --surface-muted: #F1F5F9;
+      --border: #E2E8F0;
+      --border-strong: #CBD5E1;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --accent: #1D4ED8;
+      --accent-hover: #1E40AF;
+      --accent-soft: #EFF6FF;
+      --emerald: #059669;
+      --emerald-bg: #ECFDF5;
+      --emerald-border: #A7F3D0;
+      --amber: #D97706;
+      --amber-bg: #FFFBEB;
+      --amber-border: #FDE68A;
+      --rose: #E11D48;
+      --rose-bg: #FFF1F2;
+      --rose-border: #FECDD3;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4, p { margin: 0; }
+
+    button, input, select {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    .tabular { font-variant-numeric: tabular-nums; }
+
+    /* Header */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-inner {
+      max-width: 1152px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    .brand {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 6px 2px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .nav-btn:hover { color: var(--text); }
+    .nav-btn.active {
+      color: var(--text);
+      font-weight: 600;
+      border-bottom-color: var(--accent);
+    }
+
+    .mobile-nav {
+      display: none;
+      border-top: 1px solid var(--surface-muted);
+      padding: 0 8px;
+    }
+
+    @media (max-width: 760px) {
+      .nav-links { display: none; }
+      .mobile-nav { display: flex; }
+      .mobile-nav .nav-btn {
+        flex: 1;
+        text-align: center;
+        padding: 10px 6px;
+        font-size: 0.8rem;
+      }
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #FFFFFF;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+    .btn-dark {
+      background: var(--text);
+      color: #FFFFFF;
+    }
+    .btn-dark:hover:not(:disabled) { background: #1E293B; }
+
+    .btn-outline {
+      background: var(--surface);
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+    .btn-outline:hover:not(:disabled) { background: var(--bg); }
+
+    .btn-sm {
+      min-height: 34px;
+      padding: 6px 12px;
+      font-size: 0.78rem;
+    }
+
+    .btn-danger {
+      background: var(--rose);
+      color: #FFFFFF;
+    }
+    .btn-danger:hover { background: #BE123C; }
+
+    /* Layout */
+    .container {
+      max-width: 1152px;
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+    }
+
+    .grid-practice {
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    @media (max-width: 960px) {
+      .grid-practice, .grid-2 { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .muted { color: var(--text-muted); }
+    .small { font-size: 0.82rem; }
+    .xs { font-size: 0.75rem; }
+
+    /* Practice Stage */
+    .stage-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .timer-display {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .timer-urgent { color: var(--rose); }
+
+    .progress-track {
+      height: 6px;
+      width: 100%;
+      background: var(--surface-muted);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.1s linear;
+    }
+
+    .prompt-wrap {
+      margin: 28px 0 22px;
+    }
+
+    .prompt-word {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .prompt-hint {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: #94A3B8;
+    }
+
+    .prompt-main {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+    }
+
+    .answer-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1.15rem;
+      font-weight: 500;
+      border-radius: 10px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .answer-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.14);
+    }
+
+    .answer-input.is-ok {
+      border-color: var(--emerald);
+      background: var(--emerald-bg);
+    }
+
+    .answer-input.is-bad {
+      border-color: var(--rose);
+      background: var(--rose-bg);
+    }
+
+    .accent-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .accent-key {
+      min-width: 36px;
+      min-height: 36px;
+      padding: 4px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .accent-key:hover {
+      background: var(--surface-muted);
+      border-color: var(--border-strong);
+    }
+
+    .reveal-box {
+      margin-top: 24px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border);
+    }
+
+    .solution-panel {
+      margin-top: 14px;
+      padding: 18px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .solution-french {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-top: 4px;
+    }
+
+    /* Right Rail */
+    .rail-block {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .rail-block:first-child { padding-top: 0; }
+    .rail-block:last-child { padding-bottom: 0; border-bottom: none; }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .mini-stat {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 10px 6px;
+    }
+
+    .mini-stat-val {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    /* Config Grid */
+    .verb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .tense-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .select-tile {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+
+    .select-tile:hover { background: var(--bg); border-color: var(--border-strong); }
+    .select-tile.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .check-box {
+      width: 17px;
+      height: 17px;
+      border-radius: 4px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .select-tile.selected .check-box {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Chart & Tables */
+    .bars-7d {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+      align-items: end;
+      height: 170px;
+      margin-top: 20px;
+    }
+
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .bar-well {
+      width: 100%;
+      max-width: 38px;
+      flex: 1;
+      background: var(--surface-muted);
+      border-radius: 8px;
+      padding: 3px;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .bar-fill {
+      width: 100%;
+      border-radius: 5px;
+      background: var(--accent);
+      transition: height 0.25s ease;
+    }
+
+    .bar-fill.goal { background: var(--emerald); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th {
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--surface-muted);
+    }
+
+    .text-right { text-align: right; }
+
+    .offline-toast {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      z-index: 40;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      background: var(--amber-bg);
+      border: 1px solid var(--amber-border);
+      color: #78350F;
+      font-size: 0.78rem;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    }
+
+    .list-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .list-row:last-child { border-bottom: none; }
+
+    .search-input {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      font-size: 0.88rem;
+      width: 240px;
+      max-width: 100%;
+    }
+    .search-input:focus { outline: none; border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button type="button" class="brand" id="brandBtn">Conjugo</button>
+      <nav class="nav-links" aria-label="Navegación principal" id="desktopNav"></nav>
+      <button type="button" class="btn btn-dark btn-sm" id="newSessionBtn">Nueva sesión</button>
+    </div>
+    <nav class="mobile-nav" aria-label="Navegación móvil" id="mobileNav"></nav>
+  </header>
+
+  <main class="container" id="appRoot"></main>
+
+  <div class="offline-toast" id="offlineToast" style="display:none;"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // Limpia cachés/Service Workers previos si la app se abre tras una versión anterior
+      if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        }).catch(function () {});
+        if (typeof caches !== 'undefined') {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (k) { caches.delete(k); });
+          }).catch(function () {});
+        }
+      }
+
+      // =========================================================
+      // 1. DATOS DE TIEMPOS VERBALES Y VERBOS
+      // =========================================================
+      const TENSES = [
+        { id: 'present', frKey: 'present', es: 'Presente', fr: "Présent de l'indicatif", mood: 'Indicativo', note: 'Acciones habituales o actuales.' },
+        { id: 'passe_simple', frKey: 'passe_compose', es: 'Pretérito perfecto simple', fr: 'Passé composé', mood: 'Indicativo', note: 'El pretérito perfecto simple español (fui, comí) se traduce en francés estándar con el passé composé.' },
+        { id: 'passe_compose', frKey: 'passe_compose', es: 'Pretérito perfecto compuesto', fr: 'Passé composé', mood: 'Indicativo', note: 'El pretérito perfecto compuesto español (he ido, he comido) también corresponde al passé composé.' },
+        { id: 'imparfait', frKey: 'imparfait', es: 'Pretérito imperfecto', fr: 'Imparfait', mood: 'Indicativo', note: 'Raíz de «nous» en presente + -ais, -ais, -ait, -ions, -iez, -aient (salvo être: ét-).' },
+        { id: 'plus_que_parfait', frKey: 'plus_que_parfait', es: 'Pretérito pluscuamperfecto', fr: 'Plus-que-parfait', mood: 'Indicativo', note: 'Auxiliar avoir o être en imparfait + participe passé.' },
+        { id: 'futur_simple', frKey: 'futur_simple', es: 'Futuro simple', fr: 'Futur simple', mood: 'Indicativo', note: 'Infinitivo (o raíz irregular) + -ai, -as, -a, -ons, -ez, -ont.' },
+        { id: 'futur_anterieur', frKey: 'futur_anterieur', es: 'Futuro compuesto', fr: 'Futur antérieur', mood: 'Indicativo', note: 'Auxiliar avoir o être en futur simple + participe passé.' },
+        { id: 'conditionnel_present', frKey: 'conditionnel_present', es: 'Condicional simple', fr: 'Conditionnel présent', mood: 'Condicional', note: 'Raíz del futur simple + terminaciones del imparfait.' },
+        { id: 'conditionnel_passe', frKey: 'conditionnel_passe', es: 'Condicional compuesto', fr: 'Conditionnel passé', mood: 'Condicional', note: 'Auxiliar avoir o être en conditionnel présent + participe passé.' },
+        { id: 'subjonctif_present', frKey: 'subjonctif_present', es: 'Presente de subjuntivo', fr: 'Subjonctif présent', mood: 'Subjuntivo', note: 'Se usa tras deseo, duda u obligación (il faut que...). Acepta con o sin «que».' },
+        { id: 'imperatif', frKey: 'imperatif', es: 'Imperativo', fr: 'Impératif présent', mood: 'Imperativo', note: 'Se escribe sin pronombre sujeto. Los verbos en -er pierden la -s final en 2.ª persona singular.' }
+      ];
+
+      const TENSE_MAP = Object.fromEntries(TENSES.map(t => [t.id, t]));
+      const MOODS = ['Indicativo', 'Condicional', 'Subjuntivo', 'Imperativo'];
+
+      const frEr = (s, f) => {
+        const fs = f || s;
+        return {
+          present: [`${s}e`, `${s}es`, `${s}e`, `${s}ons`, `${s}ez`, `${s}ent`],
+          imparfait: [`${s}ais`, `${s}ais`, `${s}ait`, `${s}ions`, `${s}iez`, `${s}aient`],
+          futur_simple: [`${fs}erai`, `${fs}eras`, `${fs}era`, `${fs}erons`, `${fs}erez`, `${fs}eront`],
+          conditionnel_present: [`${fs}erais`, `${fs}erais`, `${fs}erait`, `${fs}erions`, `${fs}eriez`, `${fs}eraient`],
+          subjonctif_present: [`${s}e`, `${s}es`, `${s}e`, `${s}ions`, `${s}iez`, `${s}ent`],
+          imperatif: [`${s}e`, `${s}ons`, `${s}ez`]
+        };
+      };
+      const frIr2 = (s) => ({
+        present: [`${s}is`, `${s}is`, `${s}it`, `${s}issons`, `${s}issez`, `${s}issent`],
+        imparfait: [`${s}issais`, `${s}issais`, `${s}issait`, `${s}issions`, `${s}issiez`, `${s}issaient`],
+        futur_simple: [`${s}irai`, `${s}iras`, `${s}ira`, `${s}irons`, `${s}irez`, `${s}iront`],
+        conditionnel_present: [`${s}irais`, `${s}irais`, `${s}irait`, `${s}irions`, `${s}iriez`, `${s}iraient`],
+        subjonctif_present: [`${s}isse`, `${s}isses`, `${s}isse`, `${s}issions`, `${s}issiez`, `${s}issent`],
+        imperatif: [`${s}is`, `${s}issons`, `${s}issez`]
+      });
+      const frFut = (s) => [`${s}ai`, `${s}as`, `${s}a`, `${s}ons`, `${s}ez`, `${s}ont`];
+      const frCond = (s) => [`${s}ais`, `${s}ais`, `${s}ait`, `${s}ions`, `${s}iez`, `${s}aient`];
+      const frImp = (s) => [`${s}ais`, `${s}ais`, `${s}ait`, `${s}ions`, `${s}iez`, `${s}aient`];
+
+      const H_PRES = ['he', 'has', 'ha', 'hemos', 'habéis', 'han'];
+      const H_IMP = ['había', 'habías', 'había', 'habíamos', 'habíais', 'habían'];
+      const H_FUT = ['habré', 'habrás', 'habrá', 'habremos', 'habréis', 'habrán'];
+      const H_COND = ['habría', 'habrías', 'habría', 'habríamos', 'habríais', 'habrían'];
+      const esC = (aux, pp) => aux.map(a => `${a} ${pp}`);
+
+      const esAr = (s, pp) => {
+        const p = pp || `${s}ado`;
+        return {
+          present: [`${s}o`, `${s}as`, `${s}a`, `${s}amos`, `${s}áis`, `${s}an`],
+          passe_simple: [`${s}é`, `${s}aste`, `${s}ó`, `${s}amos`, `${s}asteis`, `${s}aron`],
+          passe_compose: esC(H_PRES, p),
+          imparfait: [`${s}aba`, `${s}abas`, `${s}aba`, `${s}ábamos`, `${s}abais`, `${s}aban`],
+          plus_que_parfait: esC(H_IMP, p),
+          futur_simple: [`${s}aré`, `${s}arás`, `${s}ará`, `${s}aremos`, `${s}aréis`, `${s}arán`],
+          futur_anterieur: esC(H_FUT, p),
+          conditionnel_present: [`${s}aría`, `${s}arías`, `${s}aría`, `${s}aríamos`, `${s}aríais`, `${s}arían`],
+          conditionnel_passe: esC(H_COND, p),
+          subjonctif_present: [`${s}e`, `${s}es`, `${s}e`, `${s}emos`, `${s}éis`, `${s}en`],
+          imperatif: [`${s}a`, `${s}emos`, `${s}ad`]
+        };
+      };
+      const esEr = (s, pp) => {
+        const p = pp || `${s}ido`;
+        return {
+          present: [`${s}o`, `${s}es`, `${s}e`, `${s}emos`, `${s}éis`, `${s}en`],
+          passe_simple: [`${s}í`, `${s}iste`, `${s}ió`, `${s}imos`, `${s}isteis`, `${s}ieron`],
+          passe_compose: esC(H_PRES, p),
+          imparfait: [`${s}ía`, `${s}ías`, `${s}ía`, `${s}íamos`, `${s}íais`, `${s}ían`],
+          plus_que_parfait: esC(H_IMP, p),
+          futur_simple: [`${s}eré`, `${s}erás`, `${s}erá`, `${s}eremos`, `${s}eréis`, `${s}erán`],
+          futur_anterieur: esC(H_FUT, p),
+          conditionnel_present: [`${s}ería`, `${s}erías`, `${s}ería`, `${s}eríamos`, `${s}eríais`, `${s}erían`],
+          conditionnel_passe: esC(H_COND, p),
+          subjonctif_present: [`${s}a`, `${s}as`, `${s}a`, `${s}amos`, `${s}áis`, `${s}an`],
+          imperatif: [`${s}e`, `${s}amos`, `${s}ed`]
+        };
+      };
+      const esIr = (s, pp) => {
+        const p = pp || `${s}ido`;
+        return {
+          present: [`${s}o`, `${s}es`, `${s}e`, `${s}imos`, `${s}ís`, `${s}en`],
+          passe_simple: [`${s}í`, `${s}iste`, `${s}ió`, `${s}imos`, `${s}isteis`, `${s}ieron`],
+          passe_compose: esC(H_PRES, p),
+          imparfait: [`${s}ía`, `${s}ías`, `${s}ía`, `${s}íamos`, `${s}íais`, `${s}ían`],
+          plus_que_parfait: esC(H_IMP, p),
+          futur_simple: [`${s}iré`, `${s}irás`, `${s}irá`, `${s}iremos`, `${s}iréis`, `${s}irán`],
+          futur_anterieur: esC(H_FUT, p),
+          conditionnel_present: [`${s}iría`, `${s}irías`, `${s}iría`, `${s}iríamos`, `${s}iríais`, `${s}irían`],
+          conditionnel_passe: esC(H_COND, p),
+          subjonctif_present: [`${s}a`, `${s}as`, `${s}a`, `${s}amos`, `${s}áis`, `${s}an`],
+          imperatif: [`${s}e`, `${s}amos`, `${s}id`]
+        };
+      };
+
+      const VERBS = [
+        {
+          id: 'y_avoir', inf: 'y avoir', esInf: 'haber (hay)', impersonal: true, aux: 'avoir', pp: 'eu',
+          fr: { present: 'il y a', imparfait: 'il y avait', futur_simple: 'il y aura', conditionnel_present: 'il y aurait', subjonctif_present: 'il y ait' },
+          es: { present: 'hay', passe_simple: 'hubo', passe_compose: 'ha habido', imparfait: 'había', plus_que_parfait: 'había habido', futur_simple: 'habrá', futur_anterieur: 'habrá habido', conditionnel_present: 'habría', conditionnel_passe: 'habría habido', subjonctif_present: 'haya' },
+          note: 'Forma impersonal invariable (il y + avoir). No existe en imperativo.'
+        },
+        {
+          id: 'falloir', inf: 'falloir', esInf: 'hay que / hacer falta', impersonal: true, aux: 'avoir', pp: 'fallu',
+          fr: { present: 'il faut', imparfait: 'il fallait', futur_simple: 'il faudra', conditionnel_present: 'il faudrait', subjonctif_present: 'il faille' },
+          es: { present: 'hay que', passe_simple: 'hubo que', passe_compose: 'ha habido que', imparfait: 'había que', plus_que_parfait: 'había habido que', futur_simple: 'habrá que', futur_anterieur: 'habrá habido que', conditionnel_present: 'habría que', conditionnel_passe: 'habría habido que', subjonctif_present: 'haya que' },
+          note: 'Verbo impersonal (solo 3.ª persona «il»). En subjuntivo es «il faille».'
+        },
+        {
+          id: 'etre', inf: 'être', esInf: 'ser / estar', aux: 'avoir', pp: 'été',
+          fr: { present: ['suis', 'es', 'est', 'sommes', 'êtes', 'sont'], imparfait: frImp('ét'), futur_simple: frFut('ser'), conditionnel_present: frCond('ser'), subjonctif_present: ['sois', 'sois', 'soit', 'soyons', 'soyez', 'soient'], imperatif: ['sois', 'soyons', 'soyez'] },
+          es: { present: ['soy', 'eres', 'es', 'somos', 'sois', 'son'], passe_simple: ['fui (ser)', 'fuiste (ser)', 'fue (ser)', 'fuimos (ser)', 'fuisteis (ser)', 'fueron (ser)'], passe_compose: esC(H_PRES, 'sido'), imparfait: ['era', 'eras', 'era', 'éramos', 'erais', 'eran'], plus_que_parfait: esC(H_IMP, 'sido'), futur_simple: ['seré', 'serás', 'será', 'seremos', 'seréis', 'serán'], futur_anterieur: esC(H_FUT, 'sido'), conditionnel_present: ['sería', 'serías', 'sería', 'seríamos', 'seríais', 'serían'], conditionnel_passe: esC(H_COND, 'sido'), subjonctif_present: ['sea', 'seas', 'sea', 'seamos', 'seáis', 'sean'], imperatif: ['sé', 'seamos', 'sed'] },
+          note: 'En tiempos compuestos usa el auxiliar «avoir» (j’ai été).'
+        },
+        {
+          id: 'avoir', inf: 'avoir', esInf: 'tener', aux: 'avoir', pp: 'eu',
+          fr: { present: ['ai', 'as', 'a', 'avons', 'avez', 'ont'], imparfait: frImp('av'), futur_simple: frFut('aur'), conditionnel_present: frCond('aur'), subjonctif_present: ['aie', 'aies', 'ait', 'ayons', 'ayez', 'aient'], imperatif: ['aie', 'ayons', 'ayez'] },
+          es: { present: ['tengo', 'tienes', 'tiene', 'tenemos', 'tenéis', 'tienen'], passe_simple: ['tuve', 'tuviste', 'tuvo', 'tuvimos', 'tuvisteis', 'tuvieron'], passe_compose: esC(H_PRES, 'tenido'), imparfait: ['tenía', 'tenías', 'tenía', 'teníamos', 'teníais', 'tenían'], plus_que_parfait: esC(H_IMP, 'tenido'), futur_simple: ['tendré', 'tendrás', 'tendrá', 'tendremos', 'tendréis', 'tendrán'], futur_anterieur: esC(H_FUT, 'tenido'), conditionnel_present: ['tendría', 'tendrías', 'tendría', 'tendríamos', 'tendríais', 'tendrían'], conditionnel_passe: esC(H_COND, 'tenido'), subjonctif_present: ['tenga', 'tengas', 'tenga', 'tengamos', 'tengáis', 'tengan'], imperatif: ['ten', 'tengamos', 'tened'] },
+          note: 'El participio «eu» se pronuncia como la «u» francesa.'
+        },
+        {
+          id: 'aller', inf: 'aller', esInf: 'ir', aux: 'être', pp: 'allé',
+          fr: { present: ['vais', 'vas', 'va', 'allons', 'allez', 'vont'], imparfait: frImp('all'), futur_simple: frFut('ir'), conditionnel_present: frCond('ir'), subjonctif_present: ['aille', 'ailles', 'aille', 'allions', 'alliez', 'aillent'], imperatif: ['va', 'allons', 'allez'] },
+          es: { present: ['voy', 'vas', 'va', 'vamos', 'vais', 'van'], passe_simple: ['fui (ir)', 'fuiste (ir)', 'fue (ir)', 'fuimos (ir)', 'fuisteis (ir)', 'fueron (ir)'], passe_compose: esC(H_PRES, 'ido'), imparfait: ['iba', 'ibas', 'iba', 'íbamos', 'ibais', 'iban'], plus_que_parfait: esC(H_IMP, 'ido'), futur_simple: ['iré', 'irás', 'irá', 'iremos', 'iréis', 'irán'], futur_anterieur: esC(H_FUT, 'ido'), conditionnel_present: ['iría', 'irías', 'iría', 'iríamos', 'iríais', 'irían'], conditionnel_passe: esC(H_COND, 'ido'), subjonctif_present: ['vaya', 'vayas', 'vaya', 'vayamos', 'vayáis', 'vayan'], imperatif: ['ve', 'vayamos', 'id'] },
+          note: 'Verbo de movimiento: forma los tiempos compuestos con «être» (je suis allé).'
+        },
+        {
+          id: 'faire', inf: 'faire', esInf: 'hacer', aux: 'avoir', pp: 'fait',
+          fr: { present: ['fais', 'fais', 'fait', 'faisons', 'faites', 'font'], imparfait: frImp('fais'), futur_simple: frFut('fer'), conditionnel_present: frCond('fer'), subjonctif_present: ['fasse', 'fasses', 'fasse', 'fassions', 'fassiez', 'fassent'], imperatif: ['fais', 'faisons', 'faites'] },
+          es: { present: ['hago', 'haces', 'hace', 'hacemos', 'hacéis', 'hacen'], passe_simple: ['hice', 'hiciste', 'hizo', 'hicimos', 'hicisteis', 'hicieron'], passe_compose: esC(H_PRES, 'hecho'), imparfait: ['hacía', 'hacías', 'hacía', 'hacíamos', 'hacíais', 'hacían'], plus_que_parfait: esC(H_IMP, 'hecho'), futur_simple: ['haré', 'harás', 'hará', 'haremos', 'haréis', 'harán'], futur_anterieur: esC(H_FUT, 'hecho'), conditionnel_present: ['haría', 'harías', 'haría', 'haríamos', 'haríais', 'harían'], conditionnel_passe: esC(H_COND, 'hecho'), subjonctif_present: ['haga', 'hagas', 'haga', 'hagamos', 'hagáis', 'hagan'], imperatif: ['haz', 'hagamos', 'haced'] },
+          note: '¡Atención a «vous faites», «ils font» y la raíz «fer-» en futuro/condicional!'
+        },
+        { id: 'parler', inf: 'parler', esInf: 'hablar', aux: 'avoir', pp: 'parlé', fr: frEr('parl'), es: esAr('habl') },
+        {
+          id: 'manger', inf: 'manger', esInf: 'comer', aux: 'avoir', pp: 'mangé',
+          fr: { present: ['mange', 'manges', 'mange', 'mangeons', 'mangez', 'mangent'], imparfait: ['mangeais', 'mangeais', 'mangeait', 'mangions', 'mangiez', 'mangeaient'], futur_simple: frFut('manger'), conditionnel_present: frCond('manger'), subjonctif_present: ['mange', 'manges', 'mange', 'mangions', 'mangiez', 'mangent'], imperatif: ['mange', 'mangeons', 'mangez'] },
+          es: esEr('com'),
+          note: 'Conserva la «e» delante de «a» y «o» (nous mangeons, je mangeais).'
+        },
+        { id: 'aimer', inf: 'aimer', esInf: 'amar', aux: 'avoir', pp: 'aimé', fr: frEr('aim'), es: esAr('am') },
+        { id: 'finir', inf: 'finir', esInf: 'terminar', aux: 'avoir', pp: 'fini', fr: frIr2('fin'), es: esAr('termin'), note: 'Modelo del 2.º grupo (-ir): añade -iss- en plural del presente e imperfecto.' },
+        {
+          id: 'choisir', inf: 'choisir', esInf: 'elegir', aux: 'avoir', pp: 'choisi', fr: frIr2('chois'),
+          es: { present: ['elijo', 'eliges', 'elige', 'elegimos', 'elegís', 'eligen'], passe_simple: ['elegí', 'elegiste', 'eligió', 'elegimos', 'elegisteis', 'eligieron'], passe_compose: esC(H_PRES, 'elegido'), imparfait: ['elegía', 'elegías', 'elegía', 'elegíamos', 'elegíais', 'elegían'], plus_que_parfait: esC(H_IMP, 'elegido'), futur_simple: ['elegiré', 'elegirás', 'elegirá', 'elegiremos', 'elegiréis', 'elegirán'], futur_anterieur: esC(H_FUT, 'elegido'), conditionnel_present: ['elegiría', 'elegirías', 'elegiría', 'elegiríamos', 'elegiríais', 'elegirían'], conditionnel_passe: esC(H_COND, 'elegido'), subjonctif_present: ['elija', 'elijas', 'elija', 'elijamos', 'elijáis', 'elijan'], imperatif: ['elige', 'elijamos', 'elegid'] }
+        },
+        {
+          id: 'pouvoir', inf: 'pouvoir', esInf: 'poder', aux: 'avoir', pp: 'pu',
+          fr: { present: ['peux', 'peux', 'peut', 'pouvons', 'pouvez', 'peuvent'], imparfait: frImp('pouv'), futur_simple: frFut('pourr'), conditionnel_present: frCond('pourr'), subjonctif_present: ['puisse', 'puisses', 'puisse', 'puissions', 'puissiez', 'puissent'] },
+          es: { present: ['puedo', 'puedes', 'puede', 'podemos', 'podéis', 'pueden'], passe_simple: ['pude', 'pudiste', 'pudo', 'pudimos', 'pudisteis', 'pudieron'], passe_compose: esC(H_PRES, 'podido'), imparfait: ['podía', 'podías', 'podía', 'podíamos', 'podíais', 'podían'], plus_que_parfait: esC(H_IMP, 'podido'), futur_simple: ['podré', 'podrás', 'podrá', 'podremos', 'podréis', 'podrán'], futur_anterieur: esC(H_FUT, 'podido'), conditionnel_present: ['podría', 'podrías', 'podría', 'podríamos', 'podríais', 'podrían'], conditionnel_passe: esC(H_COND, 'podido'), subjonctif_present: ['pueda', 'puedas', 'pueda', 'podamos', 'podáis', 'puedan'] },
+          note: 'Doble «r» en futuro/condicional (je pourrai). No se usa en imperativo.'
+        },
+        {
+          id: 'vouloir', inf: 'vouloir', esInf: 'querer', aux: 'avoir', pp: 'voulu',
+          fr: { present: ['veux', 'veux', 'veut', 'voulons', 'voulez', 'veulent'], imparfait: frImp('voul'), futur_simple: frFut('voudr'), conditionnel_present: frCond('voudr'), subjonctif_present: ['veuille', 'veuilles', 'veuille', 'voulions', 'vouliez', 'veuillent'], imperatif: ['veuille', 'veuillons', 'veuillez'] },
+          es: { present: ['quiero', 'quieres', 'quiere', 'queremos', 'queréis', 'quieren'], passe_simple: ['quise', 'quisiste', 'quiso', 'quisimos', 'quisisteis', 'quisieron'], passe_compose: esC(H_PRES, 'querido'), imparfait: ['quería', 'querías', 'quería', 'queríamos', 'queríais', 'querían'], plus_que_parfait: esC(H_IMP, 'querido'), futur_simple: ['querré', 'querrás', 'querrá', 'querremos', 'querréis', 'querrán'], futur_anterieur: esC(H_FUT, 'querido'), conditionnel_present: ['querría', 'querrías', 'querría', 'querríamos', 'querríais', 'querrían'], conditionnel_passe: esC(H_COND, 'querido'), subjonctif_present: ['quiera', 'quieras', 'quiera', 'queramos', 'queráis', 'quieran'], imperatif: ['quiere', 'queramos', 'quered'] }
+        },
+        {
+          id: 'devoir', inf: 'devoir', esInf: 'deber', aux: 'avoir', pp: 'dû',
+          fr: { present: ['dois', 'dois', 'doit', 'devons', 'devez', 'doivent'], imparfait: frImp('dev'), futur_simple: frFut('devr'), conditionnel_present: frCond('devr'), subjonctif_present: ['doive', 'doives', 'doive', 'devions', 'deviez', 'doivent'] },
+          es: esEr('deb'),
+          note: 'El participio lleva acento circunflejo: «dû».'
+        },
+        {
+          id: 'savoir', inf: 'savoir', esInf: 'saber', aux: 'avoir', pp: 'su',
+          fr: { present: ['sais', 'sais', 'sait', 'savons', 'savez', 'savent'], imparfait: frImp('sav'), futur_simple: frFut('saur'), conditionnel_present: frCond('saur'), subjonctif_present: ['sache', 'saches', 'sache', 'sachions', 'sachiez', 'sachent'], imperatif: ['sache', 'sachons', 'sachez'] },
+          es: { present: ['sé', 'sabes', 'sabe', 'sabemos', 'sabéis', 'saben'], passe_simple: ['supe', 'supiste', 'supo', 'supimos', 'supisteis', 'supieron'], passe_compose: esC(H_PRES, 'sabido'), imparfait: ['sabía', 'sabías', 'sabía', 'sabíamos', 'sabíais', 'sabían'], plus_que_parfait: esC(H_IMP, 'sabido'), futur_simple: ['sabré', 'sabrás', 'sabrá', 'sabremos', 'sabréis', 'sabrán'], futur_anterieur: esC(H_FUT, 'sabido'), conditionnel_present: ['sabría', 'sabrías', 'sabría', 'sabríamos', 'sabríais', 'sabrían'], conditionnel_passe: esC(H_COND, 'sabido'), subjonctif_present: ['sepa', 'sepas', 'sepa', 'sepamos', 'sepáis', 'sepan'], imperatif: ['sabe', 'sepamos', 'sabed'] }
+        },
+        {
+          id: 'voir', inf: 'voir', esInf: 'ver', aux: 'avoir', pp: 'vu',
+          fr: { present: ['vois', 'vois', 'voit', 'voyons', 'voyez', 'voient'], imparfait: frImp('voy'), futur_simple: frFut('verr'), conditionnel_present: frCond('verr'), subjonctif_present: ['voie', 'voies', 'voie', 'voyions', 'voyiez', 'voient'], imperatif: ['vois', 'voyons', 'voyez'] },
+          es: { present: ['veo', 'ves', 've', 'vemos', 'veis', 'ven'], passe_simple: ['vi', 'viste', 'vio', 'vimos', 'visteis', 'vieron'], passe_compose: esC(H_PRES, 'visto'), imparfait: ['veía', 'veías', 'veía', 'veíamos', 'veíais', 'veían'], plus_que_parfait: esC(H_IMP, 'visto'), futur_simple: ['veré', 'verás', 'verá', 'veremos', 'veréis', 'verán'], futur_anterieur: esC(H_FUT, 'visto'), conditionnel_present: ['vería', 'verías', 'vería', 'veríamos', 'veríais', 'verían'], conditionnel_passe: esC(H_COND, 'visto'), subjonctif_present: ['vea', 'veas', 'vea', 'veamos', 'veáis', 'vean'], imperatif: ['ve (ver)', 'veamos', 'ved'] }
+        },
+        {
+          id: 'venir', inf: 'venir', esInf: 'venir', aux: 'être', pp: 'venu',
+          fr: { present: ['viens', 'viens', 'vient', 'venons', 'venez', 'viennent'], imparfait: frImp('ven'), futur_simple: frFut('viendr'), conditionnel_present: frCond('viendr'), subjonctif_present: ['vienne', 'viennes', 'vienne', 'venions', 'veniez', 'viennent'], imperatif: ['viens', 'venons', 'venez'] },
+          es: { present: ['vengo', 'vienes', 'viene', 'venimos', 'venís', 'vienen'], passe_simple: ['vine', 'viniste', 'vino', 'vinimos', 'vinisteis', 'vinieron'], passe_compose: esC(H_PRES, 'venido'), imparfait: ['venía', 'venías', 'venía', 'veníamos', 'veníais', 'venían'], plus_que_parfait: esC(H_IMP, 'venido'), futur_simple: ['vendré', 'vendrás', 'vendrá', 'vendremos', 'vendréis', 'vendrán'], futur_anterieur: esC(H_FUT, 'venido'), conditionnel_present: ['vendría', 'vendrías', 'vendría', 'vendríamos', 'vendríais', 'vendrían'], conditionnel_passe: esC(H_COND, 'venido'), subjonctif_present: ['venga', 'vengas', 'venga', 'vengamos', 'vengáis', 'vengan'], imperatif: ['ven', 'vengamos', 'venid'] },
+          note: 'Se conjuga con «être» en los tiempos compuestos (il est venu, elle est venue).'
+        },
+        {
+          id: 'prendre', inf: 'prendre', esInf: 'tomar / coger', aux: 'avoir', pp: 'pris',
+          fr: { present: ['prends', 'prends', 'prend', 'prenons', 'prenez', 'prennent'], imparfait: frImp('pren'), futur_simple: frFut('prendr'), conditionnel_present: frCond('prendr'), subjonctif_present: ['prenne', 'prennes', 'prenne', 'prenions', 'preniez', 'prennent'], imperatif: ['prends', 'prenons', 'prenez'] },
+          es: esAr('tom')
+        },
+        {
+          id: 'mettre', inf: 'mettre', esInf: 'poner', aux: 'avoir', pp: 'mis',
+          fr: { present: ['mets', 'mets', 'met', 'mettons', 'mettez', 'mettent'], imparfait: frImp('mett'), futur_simple: frFut('mettr'), conditionnel_present: frCond('mettr'), subjonctif_present: ['mette', 'mettes', 'mette', 'mettions', 'mettiez', 'mettent'], imperatif: ['mets', 'mettons', 'mettez'] },
+          es: { present: ['pongo', 'pones', 'pone', 'ponemos', 'ponéis', 'ponen'], passe_simple: ['puse', 'pusiste', 'puso', 'pusimos', 'pusisteis', 'pusieron'], passe_compose: esC(H_PRES, 'puesto'), imparfait: ['ponía', 'ponías', 'ponía', 'poníamos', 'poníais', 'ponían'], plus_que_parfait: esC(H_IMP, 'puesto'), futur_simple: ['pondré', 'pondrás', 'pondrá', 'pondremos', 'pondréis', 'pondrán'], futur_anterieur: esC(H_FUT, 'puesto'), conditionnel_present: ['pondría', 'pondrías', 'pondría', 'pondríamos', 'pondríais', 'pondrían'], conditionnel_passe: esC(H_COND, 'puesto'), subjonctif_present: ['ponga', 'pongas', 'ponga', 'pongamos', 'pongáis', 'pongan'], imperatif: ['pon', 'pongamos', 'poned'] }
+        },
+        {
+          id: 'dire', inf: 'dire', esInf: 'decir', aux: 'avoir', pp: 'dit',
+          fr: { present: ['dis', 'dis', 'dit', 'disons', 'dites', 'disent'], imparfait: frImp('dis'), futur_simple: frFut('dir'), conditionnel_present: frCond('dir'), subjonctif_present: ['dise', 'dises', 'dise', 'disions', 'disiez', 'disent'], imperatif: ['dis', 'disons', 'dites'] },
+          es: { present: ['digo', 'dices', 'dice', 'decimos', 'decís', 'dicen'], passe_simple: ['dije', 'dijiste', 'dijo', 'dijimos', 'dijisteis', 'dijeron'], passe_compose: esC(H_PRES, 'dicho'), imparfait: ['decía', 'decías', 'decía', 'decíamos', 'decíais', 'decían'], plus_que_parfait: esC(H_IMP, 'dicho'), futur_simple: ['diré', 'dirás', 'dirá', 'diremos', 'diréis', 'dirán'], futur_anterieur: esC(H_FUT, 'dicho'), conditionnel_present: ['diría', 'dirías', 'diría', 'diríamos', 'diríais', 'dirían'], conditionnel_passe: esC(H_COND, 'dicho'), subjonctif_present: ['diga', 'digas', 'diga', 'digamos', 'digáis', 'digan'], imperatif: ['di', 'digamos', 'decid'] },
+          note: 'En 2.ª persona del plural es «vous dites» (e imperativo «dites»).'
+        },
+        {
+          id: 'partir', inf: 'partir', esInf: 'partir / irse', aux: 'être', pp: 'parti',
+          fr: { present: ['pars', 'pars', 'part', 'partons', 'partez', 'partent'], imparfait: frImp('part'), futur_simple: frFut('partir'), conditionnel_present: frCond('partir'), subjonctif_present: ['parte', 'partes', 'parte', 'partions', 'partiez', 'partent'], imperatif: ['pars', 'partons', 'partez'] },
+          es: esIr('part'),
+          note: 'Se conjuga con «être» en los tiempos compuestos (nous sommes partis).'
+        },
+        {
+          id: 'sortir', inf: 'sortir', esInf: 'salir', aux: 'être', pp: 'sorti',
+          fr: { present: ['sors', 'sors', 'sort', 'sortons', 'sortez', 'sortent'], imparfait: frImp('sort'), futur_simple: frFut('sortir'), conditionnel_present: frCond('sortir'), subjonctif_present: ['sorte', 'sortes', 'sorte', 'sortions', 'sortiez', 'sortent'], imperatif: ['sors', 'sortons', 'sortez'] },
+          es: { present: ['salgo', 'sales', 'sale', 'salimos', 'salís', 'salen'], passe_simple: ['salí', 'saliste', 'salió', 'salimos', 'salisteis', 'salieron'], passe_compose: esC(H_PRES, 'salido'), imparfait: ['salía', 'salías', 'salía', 'salíamos', 'salíais', 'salían'], plus_que_parfait: esC(H_IMP, 'salido'), futur_simple: ['saldré', 'saldrás', 'saldrá', 'saldremos', 'saldréis', 'saldrán'], futur_anterieur: esC(H_FUT, 'salido'), conditionnel_present: ['saldría', 'saldrías', 'saldría', 'saldríamos', 'saldríais', 'saldrían'], conditionnel_passe: esC(H_COND, 'salido'), subjonctif_present: ['salga', 'salgas', 'salga', 'salgamos', 'salgáis', 'salgan'], imperatif: ['sal', 'salgamos', 'salid'] },
+          note: 'Usa «être» en los tiempos compuestos cuando es intransitivo (je suis sorti).'
+        },
+        {
+          id: 'dormir', inf: 'dormir', esInf: 'dormir', aux: 'avoir', pp: 'dormi',
+          fr: { present: ['dors', 'dors', 'dort', 'dormons', 'dormez', 'dorment'], imparfait: frImp('dorm'), futur_simple: frFut('dormir'), conditionnel_present: frCond('dormir'), subjonctif_present: ['dorme', 'dormes', 'dorme', 'dormions', 'dormiez', 'dorment'], imperatif: ['dors', 'dormons', 'dormez'] },
+          es: { present: ['duermo', 'duermes', 'duerme', 'dormimos', 'dormís', 'duermen'], passe_simple: ['dormí', 'dormiste', 'durmió', 'dormimos', 'dormisteis', 'durmieron'], passe_compose: esC(H_PRES, 'dormido'), imparfait: ['dormía', 'dormías', 'dormía', 'dormíamos', 'dormíais', 'dormían'], plus_que_parfait: esC(H_IMP, 'dormido'), futur_simple: ['dormiré', 'dormirás', 'dormirá', 'dormiremos', 'dormiréis', 'dormirán'], futur_anterieur: esC(H_FUT, 'dormido'), conditionnel_present: ['dormiría', 'dormirías', 'dormiría', 'dormiríamos', 'dormiríais', 'dormirían'], conditionnel_passe: esC(H_COND, 'dormido'), subjonctif_present: ['duerma', 'duermas', 'duerma', 'durmamos', 'durmáis', 'duerman'], imperatif: ['duerme', 'durmamos', 'dormid'] }
+        },
+        {
+          id: 'connaitre', inf: 'connaître', esInf: 'conocer', aux: 'avoir', pp: 'connu',
+          fr: { present: ['connais', 'connais', 'connaît', 'connaissons', 'connaissez', 'connaissent'], imparfait: frImp('connaiss'), futur_simple: frFut('connaîtr'), conditionnel_present: frCond('connaîtr'), subjonctif_present: ['connaisse', 'connaisses', 'connaisse', 'connaissions', 'connaissiez', 'connaissent'], imperatif: ['connais', 'connaissons', 'connaissez'] },
+          es: { present: ['conozco', 'conoces', 'conoce', 'conocemos', 'conocéis', 'conocen'], passe_simple: ['conocí', 'conociste', 'conoció', 'conocimos', 'conocisteis', 'conocieron'], passe_compose: esC(H_PRES, 'conocido'), imparfait: ['conocía', 'conocías', 'conocía', 'conocíamos', 'conocíais', 'conocían'], plus_que_parfait: esC(H_IMP, 'conocido'), futur_simple: ['conoceré', 'conocerás', 'conocerá', 'conoceremos', 'conoceréis', 'conocerán'], futur_anterieur: esC(H_FUT, 'conocido'), conditionnel_present: ['conocería', 'conocerías', 'conocería', 'conoceríamos', 'conoceríais', 'conocerían'], conditionnel_passe: esC(H_COND, 'conocido'), subjonctif_present: ['conozca', 'conozcas', 'conozca', 'conozcamos', 'conozcáis', 'conozcan'], imperatif: ['conoce', 'conozcamos', 'conoced'] },
+          note: 'La «i» lleva acento circunflejo delante de «t» (il connaît).'
+        },
+        {
+          id: 'croire', inf: 'croire', esInf: 'creer', aux: 'avoir', pp: 'cru',
+          fr: { present: ['crois', 'crois', 'croit', 'croyons', 'croyez', 'croient'], imparfait: frImp('croy'), futur_simple: frFut('croir'), conditionnel_present: frCond('croir'), subjonctif_present: ['croie', 'croies', 'croie', 'croyions', 'croyiez', 'croient'], imperatif: ['crois', 'croyons', 'croyez'] },
+          es: { present: ['creo', 'crees', 'cree', 'creemos', 'creéis', 'creen'], passe_simple: ['creí', 'creíste', 'creyó', 'creímos', 'creísteis', 'creyeron'], passe_compose: esC(H_PRES, 'creído'), imparfait: ['creía', 'creías', 'creía', 'creíamos', 'creíais', 'creían'], plus_que_parfait: esC(H_IMP, 'creído'), futur_simple: ['creeré', 'creerás', 'creerá', 'creeremos', 'creeréis', 'creerán'], futur_anterieur: esC(H_FUT, 'creído'), conditionnel_present: ['creería', 'creerías', 'creería', 'creeríamos', 'creeríais', 'creerían'], conditionnel_passe: esC(H_COND, 'creído'), subjonctif_present: ['crea', 'creas', 'crea', 'creamos', 'creáis', 'crean'], imperatif: ['cree', 'creamos', 'creed'] }
+        },
+        {
+          id: 'boire', inf: 'boire', esInf: 'beber', aux: 'avoir', pp: 'bu',
+          fr: { present: ['bois', 'bois', 'boit', 'buvons', 'buvez', 'boivent'], imparfait: frImp('buv'), futur_simple: frFut('boir'), conditionnel_present: frCond('boir'), subjonctif_present: ['boive', 'boives', 'boive', 'buvions', 'buviez', 'boivent'], imperatif: ['bois', 'buvons', 'buvez'] },
+          es: esEr('beb')
+        },
+        {
+          id: 'lire', inf: 'lire', esInf: 'leer', aux: 'avoir', pp: 'lu',
+          fr: { present: ['lis', 'lis', 'lit', 'lisons', 'lisez', 'lisent'], imparfait: frImp('lis'), futur_simple: frFut('lir'), conditionnel_present: frCond('lir'), subjonctif_present: ['lise', 'lises', 'lise', 'lisions', 'lisiez', 'lisent'], imperatif: ['lis', 'lisons', 'lisez'] },
+          es: { present: ['leo', 'lees', 'lee', 'leemos', 'leéis', 'leen'], passe_simple: ['leí', 'leíste', 'leyó', 'leímos', 'leísteis', 'leyeron'], passe_compose: esC(H_PRES, 'leído'), imparfait: ['leía', 'leías', 'leía', 'leíamos', 'leíais', 'leían'], plus_que_parfait: esC(H_IMP, 'leído'), futur_simple: ['leeré', 'leerás', 'leerá', 'leeremos', 'leeréis', 'leerán'], futur_anterieur: esC(H_FUT, 'leído'), conditionnel_present: ['leería', 'leerías', 'leería', 'leeríamos', 'leeríais', 'leerían'], conditionnel_passe: esC(H_COND, 'leído'), subjonctif_present: ['lea', 'leas', 'lea', 'leamos', 'leáis', 'lean'], imperatif: ['lee', 'leamos', 'leed'] }
+        },
+        {
+          id: 'ecrire', inf: 'écrire', esInf: 'escribir', aux: 'avoir', pp: 'écrit',
+          fr: { present: ['écris', 'écris', 'écrit', 'écrivons', 'écrivez', 'écrivent'], imparfait: frImp('écriv'), futur_simple: frFut('écrir'), conditionnel_present: frCond('écrir'), subjonctif_present: ['écrive', 'écrives', 'écrive', 'écrivions', 'écriviez', 'écrivent'], imperatif: ['écris', 'écrivons', 'écrivez'] },
+          es: esIr('escrib', 'escrito')
+        },
+        {
+          id: 'attendre', inf: 'attendre', esInf: 'esperar', aux: 'avoir', pp: 'attendu',
+          fr: { present: ['attends', 'attends', 'attend', 'attendons', 'attendez', 'attendent'], imparfait: frImp('attend'), futur_simple: frFut('attendr'), conditionnel_present: frCond('attendr'), subjonctif_present: ['attende', 'attendes', 'attende', 'attendions', 'attendiez', 'attendent'], imperatif: ['attends', 'attendons', 'attendez'] },
+          es: esAr('esper')
+        },
+        {
+          id: 'repondre', inf: 'répondre', esInf: 'responder', aux: 'avoir', pp: 'répondu',
+          fr: { present: ['réponds', 'réponds', 'répond', 'répondons', 'répondez', 'répondent'], imparfait: frImp('répond'), futur_simple: frFut('répondr'), conditionnel_present: frCond('répondr'), subjonctif_present: ['réponde', 'répondes', 'réponde', 'répondions', 'répondiez', 'répondent'], imperatif: ['réponds', 'répondons', 'répondez'] },
+          es: esEr('respond')
+        },
+        {
+          id: 'comprendre', inf: 'comprendre', esInf: 'comprender', aux: 'avoir', pp: 'compris',
+          fr: { present: ['comprends', 'comprends', 'comprend', 'comprenons', 'comprenez', 'comprennent'], imparfait: frImp('compren'), futur_simple: frFut('comprendr'), conditionnel_present: frCond('comprendr'), subjonctif_present: ['comprenne', 'comprennes', 'comprenne', 'comprenions', 'compreniez', 'comprennent'], imperatif: ['comprends', 'comprenons', 'comprenez'] },
+          es: esEr('comprend')
+        },
+        {
+          id: 'ouvrir', inf: 'ouvrir', esInf: 'abrir', aux: 'avoir', pp: 'ouvert',
+          fr: { present: ['ouvre', 'ouvres', 'ouvre', 'ouvrons', 'ouvrez', 'ouvrent'], imparfait: frImp('ouvr'), futur_simple: frFut('ouvrir'), conditionnel_present: frCond('ouvrir'), subjonctif_present: ['ouvre', 'ouvres', 'ouvre', 'ouvrions', 'ouvriez', 'ouvrent'], imperatif: ['ouvre', 'ouvrons', 'ouvrez'] },
+          es: esIr('abr', 'abierto'),
+          note: 'Aunque acaba en -ir, su presente sigue el modelo del 1.º grupo (-e, -es, -e...).'
+        },
+        {
+          id: 'recevoir', inf: 'recevoir', esInf: 'recibir', aux: 'avoir', pp: 'reçu',
+          fr: { present: ['reçois', 'reçois', 'reçoit', 'recevons', 'recevez', 'reçoivent'], imparfait: frImp('recev'), futur_simple: frFut('recevr'), conditionnel_present: frCond('recevr'), subjonctif_present: ['reçoive', 'reçoives', 'reçoive', 'recevions', 'receviez', 'reçoivent'], imperatif: ['reçois', 'recevons', 'recevez'] },
+          es: esIr('recib'),
+          note: 'Usa cedilla «ç» delante de «o» y «u» (je reçois, j’ai reçu).'
+        },
+        {
+          id: 'courir', inf: 'courir', esInf: 'correr', aux: 'avoir', pp: 'couru',
+          fr: { present: ['cours', 'cours', 'court', 'courons', 'courez', 'courent'], imparfait: frImp('cour'), futur_simple: frFut('courr'), conditionnel_present: frCond('courr'), subjonctif_present: ['coure', 'coures', 'coure', 'courions', 'couriez', 'courent'], imperatif: ['cours', 'courons', 'courez'] },
+          es: esEr('corr'),
+          note: 'Doble «r» en futuro y condicional (je courrai).'
+        },
+        {
+          id: 'vivre', inf: 'vivre', esInf: 'vivir', aux: 'avoir', pp: 'vécu',
+          fr: { present: ['vis', 'vis', 'vit', 'vivons', 'vivez', 'vivent'], imparfait: frImp('viv'), futur_simple: frFut('vivr'), conditionnel_present: frCond('vivr'), subjonctif_present: ['vive', 'vives', 'vive', 'vivions', 'viviez', 'vivent'], imperatif: ['vis', 'vivons', 'vivez'] },
+          es: esIr('viv')
+        }
+      ];
+
+      const VERB_MAP = Object.fromEntries(VERBS.map(v => [v.id, v]));
+
+      const PRESETS = [
+        { label: 'Esenciales', ids: ['y_avoir', 'falloir', 'etre', 'avoir', 'aller', 'faire', 'parler', 'manger', 'aimer', 'finir', 'choisir'] },
+        { label: 'Irregulares clave', ids: ['etre', 'avoir', 'aller', 'faire', 'pouvoir', 'vouloir', 'devoir', 'savoir', 'voir', 'venir', 'prendre', 'mettre', 'dire'] },
+        { label: 'Impersonales (il y a / il faut)', ids: ['y_avoir', 'falloir'] },
+        { label: 'Todos', ids: VERBS.map(v => v.id) }
+      ];
+
+      const LEVELS = [
+        { level: 1, title: 'Débutant', min: 0 },
+        { level: 2, title: 'Apprenti', min: 100 },
+        { level: 3, title: 'Explorateur', min: 250 },
+        { level: 4, title: 'Voyageur', min: 500 },
+        { level: 5, title: 'Francophone', min: 900 },
+        { level: 6, title: 'Maître des Verbes', min: 1400 },
+        { level: 7, title: 'Académicien', min: 2100 }
+      ];
+
+      const ACCENTS = ['é', 'è', 'ê', 'à', 'ç', 'û', 'î', 'ô', 'ù', 'œ', "'"];
+
+      // =========================================================
+      // 2. MOTOR DE CONJUGACIÓN Y EVALUACIÓN
+      // =========================================================
+      const AUX_FORMS = {
+        avoir: {
+          passe_compose: ['ai', 'as', 'a', 'avons', 'avez', 'ont'],
+          plus_que_parfait: ['avais', 'avais', 'avait', 'avions', 'aviez', 'avaient'],
+          futur_anterieur: ['aurai', 'auras', 'aura', 'aurons', 'aurez', 'auront'],
+          conditionnel_passe: ['aurais', 'aurais', 'aurait', 'aurions', 'auriez', 'auraient']
+        },
+        être: {
+          passe_compose: ['suis', 'es', 'est', 'sommes', 'êtes', 'sont'],
+          plus_que_parfait: ['étais', 'étais', 'était', 'étions', 'étiez', 'étaient'],
+          futur_anterieur: ['serai', 'seras', 'sera', 'serons', 'serez', 'seront'],
+          conditionnel_passe: ['serais', 'serais', 'serait', 'serions', 'seriez', 'seraient']
+        }
+      };
+
+      const VOWEL_RE = /^[aeiouyàâäéèêëîïôöùûüœæh]/i;
+      const combinePron = (p, v) => (p === 'je' && VOWEL_RE.test(v)) ? `j'${v}` : `${p} ${v}`;
+      const isValidPair = (verb, tenseId) => tenseId !== 'imperatif' || (!verb.impersonal && Boolean(verb.fr.imperatif));
+
+      function countValidPairs(vIds, tIds) {
+        let c = 0;
+        for (const vId of vIds) {
+          const v = VERB_MAP[vId];
+          if (!v) continue;
+          for (const tId of tIds) if (isValidPair(v, tId)) c++;
+        }
+        return c;
+      }
+
+      function buildImpersonalFr(verbId, frKey) {
+        if (verbId === 'y_avoir') {
+          return { present: 'il y a', passe_compose: 'il y a eu', imparfait: 'il y avait', plus_que_parfait: 'il y avait eu', futur_simple: 'il y aura', futur_anterieur: 'il y aura eu', conditionnel_present: 'il y aurait', conditionnel_passe: 'il y aurait eu', subjonctif_present: 'il y ait' }[frKey] || 'il y a';
+        }
+        return { present: 'il faut', passe_compose: 'il a fallu', imparfait: 'il fallait', plus_que_parfait: 'il avait fallu', futur_simple: 'il faudra', futur_anterieur: 'il aura fallu', conditionnel_present: 'il faudrait', conditionnel_passe: 'il aurait fallu', subjonctif_present: 'il faille' }[frKey] || 'il faut';
+      }
+
+      function generateQuestion(vIds, tIds, prevKey) {
+        const pairs = [];
+        for (const vId of vIds) {
+          const v = VERB_MAP[vId];
+          if (!v) continue;
+          for (const tId of tIds) if (isValidPair(v, tId)) pairs.push({ verb: v, tenseId: tId });
+        }
+        if (!pairs.length) pairs.push({ verb: VERB_MAP.aller, tenseId: 'present' });
+        let candidates = pairs;
+        if (pairs.length > 1 && prevKey) {
+          const filtered = pairs.filter(p => `${p.verb.id}:${p.tenseId}` !== prevKey);
+          if (filtered.length) candidates = filtered;
+        }
+        const { verb, tenseId } = candidates[Math.floor(Math.random() * candidates.length)];
+        const tMeta = TENSE_MAP[tenseId];
+        const frKey = tMeta.frKey;
+
+        if (verb.impersonal) {
+          const canonical = buildImpersonalFr(verb.id, frKey);
+          const accepted = frKey === 'subjonctif_present' ? [canonical, `qu'${canonical}`] : [canonical];
+          return {
+            id: `${verb.id}-${tenseId}-${Date.now()}`,
+            verbId: verb.id, inf: verb.inf, esInf: verb.esInf, tenseId, frKey,
+            esPrompt: verb.es[tenseId], esHint: null, canonical, accepted,
+            tip: verb.note || tMeta.note, impersonal: true
+          };
+        }
+
+        if (tenseId === 'imperatif') {
+          const idx = Math.floor(Math.random() * 3);
+          const hints = ['tú', 'nosotros', 'vosotros'];
+          return {
+            id: `${verb.id}-${tenseId}-${idx}-${Date.now()}`,
+            verbId: verb.id, inf: verb.inf, esInf: verb.esInf, tenseId, frKey,
+            esPrompt: verb.es.imperatif[idx], esHint: hints[idx],
+            canonical: verb.fr.imperatif[idx], accepted: [verb.fr.imperatif[idx]],
+            tip: tMeta.note, impersonal: false
+          };
+        }
+
+        const pIdx = Math.floor(Math.random() * 6);
+        let frPron = 'je', esPron = 'yo', fem = false;
+        if (pIdx === 1) { frPron = 'tu'; esPron = 'tú'; }
+        else if (pIdx === 2) { if (Math.random() < 0.5) { frPron = 'il'; esPron = 'él'; } else { frPron = 'elle'; esPron = 'ella'; fem = true; } }
+        else if (pIdx === 3) { frPron = 'nous'; esPron = 'nosotros'; }
+        else if (pIdx === 4) { frPron = 'vous'; esPron = 'vosotros'; }
+        else if (pIdx === 5) { if (Math.random() < 0.5) { frPron = 'ils'; esPron = 'ellos'; } else { frPron = 'elles'; esPron = 'ellas'; fem = true; } }
+
+        const isCompound = ['passe_compose', 'plus_que_parfait', 'futur_anterieur', 'conditionnel_passe'].includes(frKey);
+        let canonical = '';
+        let accepted = [];
+
+        if (isCompound) {
+          const auxForm = AUX_FORMS[verb.aux][frKey][pIdx];
+          const pref = combinePron(frPron, auxForm);
+          const pp = verb.pp;
+          if (verb.aux === 'être') {
+            if (pIdx === 2) { canonical = fem ? `${pref} ${pp}e` : `${pref} ${pp}`; accepted = [canonical]; }
+            else if (pIdx === 5) { canonical = fem ? `${pref} ${pp}es` : `${pref} ${pp}s`; accepted = [canonical]; }
+            else if (pIdx === 0 || pIdx === 1) { canonical = `${pref} ${pp}`; accepted = [`${pref} ${pp}`, `${pref} ${pp}e`]; }
+            else if (pIdx === 3) { canonical = `${pref} ${pp}s`; accepted = [`${pref} ${pp}s`, `${pref} ${pp}es`]; }
+            else { canonical = `${pref} ${pp}s`; accepted = [`${pref} ${pp}s`, `${pref} ${pp}es`, `${pref} ${pp}`, `${pref} ${pp}e`]; }
+          } else {
+            canonical = `${pref} ${pp}`;
+            accepted = [canonical];
+          }
+        } else {
+          canonical = combinePron(frPron, verb.fr[frKey][pIdx]);
+          accepted = [canonical];
+          if (frKey === 'subjonctif_present') {
+            accepted.push((VOWEL_RE.test(frPron) ? "qu'" : 'que ') + canonical);
+          }
+        }
+
+        const ambig1st = pIdx === 0 && ['imparfait', 'plus_que_parfait', 'conditionnel_present', 'conditionnel_passe', 'subjonctif_present'].includes(tenseId);
+        const esHint = (pIdx === 2 || pIdx === 5 || ambig1st) ? esPron : null;
+
+        return {
+          id: `${verb.id}-${tenseId}-${pIdx}-${Date.now()}`,
+          verbId: verb.id, inf: verb.inf, esInf: verb.esInf, tenseId, frKey,
+          esPrompt: verb.es[tenseId][pIdx], esHint, canonical, accepted,
+          tip: (tenseId === 'passe_simple' || tenseId === 'passe_compose') ? tMeta.note : (verb.note || tMeta.note),
+          impersonal: false
+        };
+      }
+
+      const normFr = (s) => s.trim().toLowerCase().replace(/[’`´]/g, "'").replace(/\s*'\s*/g, "'").replace(/[¡!¿?.,;:]/g, '').replace(/\s+/g, ' ');
+      const stripAcc = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+      function evaluateAnswer(raw, q, elapsedMs, timedOut, curStreak) {
+        const u = normFr(raw);
+        if (!u) return { isCorrect: false, isAccentIssue: false, timedOut, userAnswer: '', canonical: q.canonical, xp: 0, elapsedMs };
+        const acc = q.accepted.map(normFr);
+        if (acc.includes(u)) {
+          let xp = 15;
+          if (elapsedMs <= 6000) xp += 5;
+          if (curStreak >= 2) xp += 5;
+          return { isCorrect: true, isAccentIssue: false, timedOut, userAnswer: raw.trim(), canonical: q.canonical, xp, elapsedMs };
+        }
+        const accentIssue = acc.some(a => stripAcc(a) === stripAcc(u));
+        return { isCorrect: false, isAccentIssue: accentIssue, timedOut, userAnswer: raw.trim(), canonical: q.canonical, xp: 0, elapsedMs };
+      }
+
+      // =========================================================
+      // 3. VOZ EN FRANCÉS (SIN CONEXIÓN)
+      // =========================================================
+      let speaking = false;
+      function getFrenchVoice() {
+        if (!('speechSynthesis' in window)) return null;
+        const voices = window.speechSynthesis.getVoices();
+        return voices.find(v => v.lang.toLowerCase() === 'fr-fr' && v.localService)
+          || voices.find(v => v.lang.toLowerCase() === 'fr-fr')
+          || voices.find(v => v.lang.toLowerCase().startsWith('fr'))
+          || null;
+      }
+      if ('speechSynthesis' in window) {
+        getFrenchVoice();
+        window.speechSynthesis.onvoiceschanged = () => getFrenchVoice();
+      }
+      function speakFr(text, rate = 0.95) {
+        if (!('speechSynthesis' in window)) return;
+        try {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(text);
+          const v = getFrenchVoice();
+          if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'fr-FR'; }
+          u.rate = rate;
+          u.onstart = () => { speaking = true; updateSpeakButtons(); };
+          u.onend = u.onerror = () => { speaking = false; updateSpeakButtons(); };
+          window.speechSynthesis.speak(u);
+        } catch (e) {}
+      }
+      function updateSpeakButtons() {
+        const btn = document.getElementById('speakMainBtn');
+        if (btn) btn.textContent = speaking ? '🔊 Reproduciendo...' : '🔊 Escuchar';
+      }
+
+      // =========================================================
+      // 4. ALMACENAMIENTO LOCAL, RACHAS Y NIVELES
+      // =========================================================
+      const STORAGE_KEY = 'conjugo_html_v1';
+      const defaultState = () => ({
+        xp: 0, currentStreak: 0, longestStreak: 0, lastDate: null, dailyGoal: 10,
+        totalAttempts: 0, totalCorrect: 0, totalTimeMs: 0, bestSessionStreak: 0,
+        verbStats: {}, tenseStats: {}, dailyHistory: {},
+        config: {
+          verbs: PRESETS[0].ids.slice(),
+          tenses: ['present', 'passe_simple', 'passe_compose', 'imparfait', 'futur_simple'],
+          sessionLen: 10, autoSpeak: true, accentBar: true, infHint: false, offlineFocus: false
+        }
+      });
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return defaultState();
+          const p = JSON.parse(raw);
+          const d = defaultState();
+          return { ...d, ...p, config: { ...d.config, ...(p.config || {}) }, verbStats: p.verbStats || {}, tenseStats: p.tenseStats || {}, dailyHistory: p.dailyHistory || {} };
+        } catch { return defaultState(); }
+      }
+      let state = loadState();
+      const saveState = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {} };
+
+      const dateKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const yesterdayKey = () => { const d = new Date(); d.setDate(d.getDate() - 1); return dateKey(d); };
+      const effectiveStreak = () => (state.lastDate === dateKey() || state.lastDate === yesterdayKey()) ? state.currentStreak : 0;
+
+      function levelInfo(xp) {
+        let cur = LEVELS[0], next = LEVELS[1];
+        for (let i = 0; i < LEVELS.length; i++) {
+          if (xp >= LEVELS[i].min) { cur = LEVELS[i]; next = LEVELS[i + 1] || null; }
+        }
+        const pct = next ? Math.min(100, Math.max(0, Math.round(((xp - cur.min) / (next.min - cur.min)) * 100))) : 100;
+        return { ...cur, nextMin: next ? next.min : null, pct };
+      }
+
+      // =========================================================
+      // 5. ESTADO DE LA SESIÓN Y RENDERIZADO
+      // =========================================================
+      let activeTab = 'practicar';
+      let overrideVerbs = null;
+      let searchQuery = '';
+      let confirmReset = false;
+      let showTopSelector = false;
+
+      let question = null;
+      let userInput = '';
+      let timeLeftMs = 20000;
+      let isPaused = false;
+      let result = null;
+      let bonusGoalXp = 0;
+      let sessionAttempts = [];
+      let sessionXp = 0;
+      let sessionStreak = 0;
+      let sessionComplete = false;
+      let qStartMs = Date.now();
+      let timerHandle = null;
+
+      function activeVerbs() { return (overrideVerbs && overrideVerbs.length) ? overrideVerbs : state.config.verbs; }
+      function activeTenses() { return state.config.tenses; }
+
+      function stopTimer() {
+        if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+      }
+
+      function startTimer() {
+        stopTimer();
+        if (result || isPaused || sessionComplete || activeTab !== 'practicar') return;
+        timerHandle = setInterval(() => {
+          timeLeftMs -= 100;
+          if (timeLeftMs <= 0) {
+            timeLeftMs = 0;
+            stopTimer();
+            finalize(true);
+          } else {
+            const el = document.getElementById('timerNum');
+            const bar = document.getElementById('timerBar');
+            if (el) {
+              el.textContent = `${(timeLeftMs / 1000).toFixed(1)} s`;
+              el.className = 'timer-display tabular' + (timeLeftMs <= 4000 ? ' timer-urgent' : '');
+            }
+            if (bar) {
+              bar.style.width = `${(timeLeftMs / 20000) * 100}%`;
+              bar.style.background = timeLeftMs <= 4000 ? 'var(--rose)' : 'var(--accent)';
+            }
+          }
+        }, 100);
+      }
+
+      function startNewSession(focusInput = true) {
+        stopTimer();
+        if ('speechSynthesis' in window) try { window.speechSynthesis.cancel(); } catch {}
+        question = generateQuestion(activeVerbs(), activeTenses());
+        userInput = '';
+        timeLeftMs = 20000;
+        isPaused = false;
+        result = null;
+        bonusGoalXp = 0;
+        sessionAttempts = [];
+        sessionXp = 0;
+        sessionStreak = 0;
+        sessionComplete = false;
+        qStartMs = Date.now();
+        render();
+        startTimer();
+        if (focusInput) setTimeout(() => document.getElementById('answerInput')?.focus(), 30);
+      }
+
+      function finalize(timedOut) {
+        if (result) return;
+        stopTimer();
+        const elapsed = Math.min(20000, Date.now() - qStartMs);
+        const inp = document.getElementById('answerInput');
+        if (inp) userInput = inp.value;
+        const ev = evaluateAnswer(userInput, question, elapsed, timedOut, sessionStreak);
+        sessionStreak = ev.isCorrect ? sessionStreak + 1 : 0;
+        result = ev;
+
+        const today = dateKey();
+        const yest = yesterdayKey();
+        const prevToday = state.dailyHistory[today] || { attempts: 0, correct: 0, xp: 0 };
+        const newTodayCount = prevToday.attempts + 1;
+        bonusGoalXp = (prevToday.attempts < state.dailyGoal && newTodayCount >= state.dailyGoal) ? 30 : 0;
+        const totalDelta = ev.xp + bonusGoalXp;
+
+        if (state.lastDate === today) state.currentStreak = Math.max(1, state.currentStreak);
+        else if (state.lastDate === yest) state.currentStreak += 1;
+        else state.currentStreak = 1;
+
+        state.longestStreak = Math.max(state.longestStreak, state.currentStreak);
+        state.lastDate = today;
+        state.xp += totalDelta;
+        state.totalAttempts += 1;
+        state.totalCorrect += ev.isCorrect ? 1 : 0;
+        state.totalTimeMs += elapsed;
+        state.bestSessionStreak = Math.max(state.bestSessionStreak, sessionStreak);
+
+        const vs = state.verbStats[question.verbId] || { attempts: 0, correct: 0 };
+        state.verbStats[question.verbId] = { attempts: vs.attempts + 1, correct: vs.correct + (ev.isCorrect ? 1 : 0) };
+        const ts = state.tenseStats[question.tenseId] || { attempts: 0, correct: 0 };
+        state.tenseStats[question.tenseId] = { attempts: ts.attempts + 1, correct: ts.correct + (ev.isCorrect ? 1 : 0) };
+        state.dailyHistory[today] = { attempts: newTodayCount, correct: prevToday.correct + (ev.isCorrect ? 1 : 0), xp: prevToday.xp + totalDelta };
+        saveState();
+
+        sessionXp += totalDelta;
+        sessionAttempts.push({
+          inf: question.inf, tenseId: question.tenseId, verbId: question.verbId,
+          esPrompt: question.esPrompt, canonical: question.canonical,
+          userAnswer: ev.userAnswer, isCorrect: ev.isCorrect
+        });
+
+        render();
+        if (state.config.autoSpeak) speakFr(question.canonical, 0.95);
+        setTimeout(() => document.getElementById('nextBtn')?.focus(), 30);
+      }
+
+      function nextQuestion() {
+        if ('speechSynthesis' in window) try { window.speechSynthesis.cancel(); } catch {}
+        const targetLen = overrideVerbs ? Math.max(6, overrideVerbs.length * 2) : state.config.sessionLen;
+        if (targetLen > 0 && sessionAttempts.length >= targetLen) {
+          sessionComplete = true;
+          stopTimer();
+          render();
+          return;
+        }
+        question = generateQuestion(activeVerbs(), activeTenses(), `${question.verbId}:${question.tenseId}`);
+        userInput = '';
+        timeLeftMs = 20000;
+        isPaused = false;
+        result = null;
+        bonusGoalXp = 0;
+        qStartMs = Date.now();
+        render();
+        startTimer();
+        setTimeout(() => document.getElementById('answerInput')?.focus(), 30);
+      }
+
+      function esc(str) {
+        return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+      }
+
+      function renderNav() {
+        const tabs = [
+          { id: 'practicar', label: 'Practicar' },
+          { id: 'configurar', label: 'Configurar' },
+          { id: 'estadisticas', label: 'Estadísticas' },
+          { id: 'offline', label: 'Sin conexión' }
+        ];
+        const html = tabs.map(t => `<button type="button" class="nav-btn ${activeTab === t.id ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`).join('');
+        document.getElementById('desktopNav').innerHTML = html;
+        document.getElementById('mobileNav').innerHTML = html;
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+          btn.onclick = () => {
+            activeTab = btn.dataset.tab;
+            if (activeTab === 'practicar' && !sessionComplete) startTimer(); else stopTimer();
+            render();
+          };
+        });
+      }
+
+      function renderOfflineBanner() {
+        const el = document.getElementById('offlineToast');
+        const offline = !navigator.onLine;
+        if (offline || state.config.offlineFocus) {
+          el.style.display = 'inline-flex';
+          el.textContent = offline ? '📶 Sin conexión — Trabajando localmente' : '📶 Modo estudio sin conexión activo';
+        } else {
+          el.style.display = 'none';
+        }
+      }
+
+      function renderPractice(root) {
+        const lvl = levelInfo(state.xp);
+        const streak = effectiveStreak();
+        const todayCount = (state.dailyHistory[dateKey()] || {}).attempts || 0;
+        const goalPct = Math.min(100, Math.round((todayCount / state.dailyGoal) * 100));
+        const targetLen = overrideVerbs ? Math.max(6, overrideVerbs.length * 2) : state.config.sessionLen;
+        const hits = sessionAttempts.filter(a => a.isCorrect).length;
+
+        if (sessionComplete) {
+          const acc = sessionAttempts.length ? Math.round((hits / sessionAttempts.length) * 100) : 0;
+          const weakIds = [...new Set(sessionAttempts.filter(a => !a.isCorrect).map(a => a.verbId))];
+          root.innerHTML = `
+            <div class="card" style="max-width:860px;margin:0 auto;">
+              <div class="section-head">
+                <div>
+                  <p class="small" style="color:var(--accent);font-weight:600;">Sesión completada</p>
+                  <h2 class="section-title">Resumen de tu práctica</h2>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                  ${overrideVerbs ? '<button type="button" class="btn btn-outline" id="exitOverrideBtn">Volver a selección habitual</button>' : ''}
+                  <button type="button" class="btn btn-primary" id="restartSessBtn">↻ Otra sesión</button>
+                </div>
+              </div>
+              <div class="grid-4" style="padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:20px;">
+                <div><p class="xs muted">Aciertos</p><p class="tabular" style="font-size:1.6rem;font-weight:800;">${hits}/${sessionAttempts.length}</p></div>
+                <div><p class="xs muted">Precisión</p><p class="tabular" style="font-size:1.6rem;font-weight:800;">${acc}%</p></div>
+                <div><p class="xs muted">Puntos ganados</p><p class="tabular" style="font-size:1.6rem;font-weight:800;color:var(--accent);">+${sessionXp} XP</p></div>
+                <div><p class="xs muted">Racha diaria</p><p class="tabular" style="font-size:1.6rem;font-weight:800;">${streak} ${streak === 1 ? 'día' : 'días'}</p></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+                <h3 style="font-size:1rem;font-weight:700;">Repaso (${sessionAttempts.length} verbos)</h3>
+                ${weakIds.length ? `<button type="button" class="btn btn-outline btn-sm" id="reviewWeakSessBtn">Repasar los ${weakIds.length} con fallos</button>` : ''}
+              </div>
+              <div>
+                ${sessionAttempts.map((a, i) => `
+                  <div class="list-row">
+                    <div>
+                      <div style="font-size:0.95rem;">
+                        <strong>${a.isCorrect ? '✓' : '✕'} ${esc(a.esPrompt)}</strong>
+                        <span class="muted"> → </span>
+                        <strong style="color:var(--accent);">${esc(a.canonical)}</strong>
+                      </div>
+                      <p class="xs muted">${esc(a.inf)} · ${esc(TENSE_MAP[a.tenseId].es)}${!a.isCorrect && a.userAnswer ? ` · Tu respuesta: <span style="color:var(--rose);">${esc(a.userAnswer)}</span>` : ''}</p>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm" data-say="${i}">🔊 Escuchar</button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+          document.getElementById('restartSessBtn').onclick = () => startNewSession();
+          document.getElementById('exitOverrideBtn')?.addEventListener('click', () => { overrideVerbs = null; startNewSession(); });
+          document.getElementById('reviewWeakSessBtn')?.addEventListener('click', () => { overrideVerbs = weakIds; startNewSession(); });
+          root.querySelectorAll('[data-say]').forEach(b => {
+            b.onclick = () => speakFr(sessionAttempts[Number(b.dataset.say)].canonical, 0.9);
+          });
+          return;
+        }
+
+        const tMeta = TENSE_MAP[question.tenseId];
+        const statusText = result
+          ? result.isCorrect
+            ? '<span style="color:var(--emerald);font-weight:700;">✓ ¡Correcto!</span>'
+            : result.isAccentIssue
+              ? '<span style="color:var(--amber);font-weight:700;">⚠ Casi correcto: revisa las tildes o la cedilla</span>'
+              : result.timedOut
+                ? '<span style="color:var(--rose);font-weight:700;">⏱ Tiempo agotado (20 s) — Solución</span>'
+                : '<span style="color:var(--rose);font-weight:700;">✕ Revisa la forma correcta</span>'
+          : '';
+
+        const topValidCount = countValidPairs(state.config.verbs, state.config.tenses);
+        const topFilteredVerbs = searchQuery.trim()
+          ? VERBS.filter(v => v.inf.toLowerCase().includes(searchQuery.trim().toLowerCase()) || v.esInf.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+          : VERBS;
+        const activeTenseNames = activeTenses().map(id => TENSE_MAP[id]?.es).filter(Boolean);
+
+        root.innerHTML = `
+          <section class="card" style="margin-bottom:22px;padding:16px 20px;">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
+              <div style="min-width:0;">
+                <p style="font-weight:700;font-size:0.95rem;">Elegir verbos y tiempos</p>
+                <p class="xs muted" style="margin-top:2px;">
+                  <strong style="color:var(--text);">${activeTenses().length}</strong> ${activeTenses().length === 1 ? 'tiempo' : 'tiempos'} (${esc(activeTenseNames.slice(0, 3).join(', '))}${activeTenseNames.length > 3 ? ` y ${activeTenseNames.length - 3} más` : ''}) · <strong style="color:var(--text);">${activeVerbs().length}</strong> ${activeVerbs().length === 1 ? 'verbo' : 'verbos'}
+                </p>
+              </div>
+              <button type="button" class="btn ${showTopSelector ? 'btn-dark' : 'btn-outline'} btn-sm" id="toggleTopSelectorBtn">
+                ${showTopSelector ? 'Ocultar selector ▲' : 'Elegir verbos y tiempos ▼'}
+              </button>
+            </div>
+
+            ${showTopSelector ? `
+              <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+                <div style="margin-bottom:18px;">
+                  <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+                    <span style="font-weight:700;font-size:0.9rem;">1. Tiempos verbales (${state.config.tenses.length} de ${TENSES.length})</span>
+                    <div style="display:flex;gap:6px;">
+                      <button type="button" class="btn btn-outline btn-sm" id="topBasicTensesBtn">Básicos</button>
+                      <button type="button" class="btn btn-outline btn-sm" id="topAllTensesBtn">Todos</button>
+                    </div>
+                  </div>
+                  <div class="tense-grid">
+                    ${TENSES.map(t => {
+                      const sel = state.config.tenses.includes(t.id);
+                      return `
+                        <button type="button" class="select-tile ${sel ? 'selected' : ''}" data-top-tense="${t.id}" style="padding:9px 11px;">
+                          <div>
+                            <div style="font-weight:700;font-size:0.84rem;">${esc(t.es)}</div>
+                            <div class="xs muted">${esc(t.fr)}</div>
+                          </div>
+                          <span class="check-box">${sel ? '✓' : ''}</span>
+                        </button>`;
+                    }).join('')}
+                  </div>
+                </div>
+
+                <div>
+                  <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+                    <span style="font-weight:700;font-size:0.9rem;">2. Verbos en infinitivo (${state.config.verbs.length} de ${VERBS.length})</span>
+                    <input type="text" class="search-input" id="topVerbSearchInp" value="${esc(searchQuery)}" placeholder="Buscar verbo..." style="padding:6px 10px;font-size:0.82rem;" />
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:center;">
+                    <span class="xs muted">Rápido:</span>
+                    ${PRESETS.map((p, i) => `<button type="button" class="btn btn-outline btn-sm" data-top-preset="${i}">${esc(p.label)}</button>`).join('')}
+                    <button type="button" class="btn btn-outline btn-sm" id="topClearVerbsBtn">Limpiar</button>
+                  </div>
+                  <div class="verb-grid" style="max-height:240px;overflow-y:auto;padding-right:4px;">
+                    ${topFilteredVerbs.map(v => {
+                      const sel = state.config.verbs.includes(v.id);
+                      return `
+                        <button type="button" class="select-tile ${sel ? 'selected' : ''}" data-top-verb="${v.id}" style="padding:9px 10px;">
+                          <div style="min-width:0;">
+                            <div style="font-weight:700;font-size:0.85rem;">${esc(v.inf)}</div>
+                            <div class="xs muted">${esc(v.esInf)}</div>
+                          </div>
+                          <span class="check-box">${sel ? '✓' : ''}</span>
+                        </button>`;
+                    }).join('')}
+                  </div>
+                </div>
+
+                <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+                  <span class="xs muted tabular">${topValidCount === 0 ? '<strong style="color:var(--rose);">Selecciona al menos un verbo y un tiempo compatible</strong>' : `${topValidCount} combinaciones válidas`}</span>
+                  <div style="display:flex;gap:8px;">
+                    <button type="button" class="btn btn-outline btn-sm" id="topMoreCfgBtn">Más opciones</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="topApplyBtn" ${topValidCount === 0 ? 'disabled' : ''}>Aplicar y practicar</button>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+          </section>
+
+          <div class="grid-practice">
+            <section class="card">
+              ${overrideVerbs ? `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--border);font-size:0.85rem;">
+                  <span style="color:var(--accent);font-weight:600;">Modo repaso dirigido (${overrideVerbs.map(id => VERB_MAP[id]?.inf).filter(Boolean).join(', ')})</span>
+                  <button type="button" class="btn btn-outline btn-sm" id="clearOverBtn">Salir</button>
+                </div>` : ''}
+
+              <div class="stage-meta">
+                <div class="small muted">
+                  <strong style="color:var(--text);">${esc(tMeta.es)}</strong> · ${esc(tMeta.mood)}
+                  ${state.config.infHint ? ` · <span style="color:var(--accent);font-weight:600;">Infinitivo: ${esc(question.inf)}</span>` : ''}
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  ${!result ? `<button type="button" class="btn btn-outline btn-sm" id="pauseBtn">${isPaused ? '▶ Reanudar' : '❚❚ Pausar'}</button>` : ''}
+                  <span id="timerNum" class="timer-display tabular ${timeLeftMs <= 4000 && !result ? 'timer-urgent' : ''}">⏱ ${(timeLeftMs / 1000).toFixed(1)} s</span>
+                </div>
+              </div>
+
+              <div class="progress-track">
+                <div id="timerBar" class="progress-fill" style="width:${result ? 100 : (timeLeftMs / 20000) * 100}%;background:${result ? (result.isCorrect ? 'var(--emerald)' : 'var(--rose)') : (timeLeftMs <= 4000 ? 'var(--rose)' : 'var(--accent)')};"></div>
+              </div>
+
+              <div class="prompt-wrap">
+                <p class="xs muted">${question.tenseId === 'imperatif' ? 'Escribe el imperativo en francés (sin sujeto)' : question.impersonal ? 'Escribe la forma impersonal en francés' : 'Escribe la forma verbal en francés con su sujeto'}</p>
+                <div class="prompt-word">
+                  ${question.esHint ? `<span class="prompt-hint">(${esc(question.esHint)})</span>` : ''}
+                  <h2 class="prompt-main">${esc(question.esPrompt)}</h2>
+                </div>
+                ${(question.tenseId === 'passe_simple' || question.tenseId === 'passe_compose') ? '<p class="xs muted" style="margin-top:6px;">Objetivo en francés: <strong style="color:var(--text);">Passé composé</strong></p>' : ''}
+              </div>
+
+              <form id="practiceForm">
+                <input id="answerInput" class="answer-input ${result ? (result.isCorrect ? 'is-ok' : 'is-bad') : ''}" type="text" autocomplete="off" autocapitalize="none" spellcheck="false"
+                  ${result ? 'disabled' : ''}
+                  value="${esc(userInput)}"
+                  placeholder="${question.tenseId === 'imperatif' ? 'Ej.: va / allons / allez' : question.impersonal ? 'Ej.: il y a / il faut' : 'Ej.: je vais'}" />
+
+                ${(state.config.accentBar && !result) ? `
+                  <div class="accent-bar">
+                    <span class="xs muted" style="margin-right:4px;">Caracteres:</span>
+                    ${ACCENTS.map(c => `<button type="button" class="accent-key" data-acc="${esc(c)}">${esc(c)}</button>`).join('')}
+                  </div>` : ''}
+
+                ${!result ? `
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;">
+                    <button type="submit" class="btn btn-primary">Comprobar ahora</button>
+                    <span class="xs muted">Pulsa Enter para comprobar o espera ${Math.ceil(timeLeftMs / 1000)} s</span>
+                  </div>` : ''}
+              </form>
+
+              ${result ? `
+                <div class="reveal-box">
+                  <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;">
+                    <div>${statusText}</div>
+                    ${result.xp > 0 ? `<div class="small tabular" style="color:var(--accent);font-weight:700;">+${result.xp} XP${bonusGoalXp > 0 ? ` · <span style="color:var(--emerald);">+${bonusGoalXp} XP meta diaria</span>` : ''}</div>` : ''}
+                  </div>
+                  <div class="solution-panel">
+                    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;">
+                      <div>
+                        <p class="xs muted">${esc(question.inf)} (${esc(question.esInf)}) · ${esc(tMeta.fr)}</p>
+                        <p class="solution-french">${esc(question.canonical)}</p>
+                        ${question.accepted.length > 1 ? `<p class="xs muted" style="margin-top:4px;">También válido: ${esc(question.accepted.slice(1).join(' / '))}</p>` : ''}
+                      </div>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" id="speakMainBtn">🔊 Escuchar</button>
+                        <button type="button" class="btn btn-outline btn-sm tabular" id="speakSlowBtn">0.7× Lento</button>
+                      </div>
+                    </div>
+                    <p class="xs muted" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">${esc(question.tip)}</p>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+                    <button type="button" class="btn btn-dark" id="nextBtn">${(targetLen > 0 && sessionAttempts.length >= targetLen) ? 'Ver resumen de sesión →' : 'Siguiente verbo →'}</button>
+                  </div>
+                </div>` : ''}
+            </section>
+
+            <aside class="card">
+              <div class="rail-block">
+                <div style="display:flex;justify-content:space-between;font-size:0.88rem;">
+                  <strong>Sesión actual</strong>
+                  <span class="tabular xs muted">${targetLen > 0 ? `${Math.min(sessionAttempts.length + (result ? 0 : 1), targetLen)} / ${targetLen}` : `${sessionAttempts.length} completados`}</span>
+                </div>
+                <div class="mini-stats">
+                  <div class="mini-stat"><p class="xs muted">Aciertos</p><p class="mini-stat-val tabular">${hits}</p></div>
+                  <div class="mini-stat"><p class="xs muted">En racha</p><p class="mini-stat-val tabular">${sessionStreak}</p></div>
+                  <div class="mini-stat"><p class="xs muted">XP sesión</p><p class="mini-stat-val tabular" style="color:var(--accent);">+${sessionXp}</p></div>
+                </div>
+              </div>
+
+              <div class="rail-block">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <strong style="font-size:0.88rem;">🔥 Racha diaria</strong>
+                  <strong class="tabular" style="font-size:0.9rem;">${streak} ${streak === 1 ? 'día' : 'días'}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:10px;" class="xs muted">
+                  <span>Objetivo de hoy</span>
+                  <span class="tabular">${todayCount} / ${state.dailyGoal} verbos</span>
+                </div>
+                <div class="progress-track"><div class="progress-fill" style="width:${goalPct}%;background:var(--amber);"></div></div>
+              </div>
+
+              <div class="rail-block">
+                <strong style="font-size:0.88rem;">🏆 Nivel ${lvl.level} · ${esc(lvl.title)}</strong>
+                <div style="display:flex;justify-content:space-between;margin-top:6px;" class="xs muted tabular">
+                  <span>${state.xp} XP totales</span>
+                  <span>${lvl.nextMin !== null ? `Siguiente: ${lvl.nextMin} XP` : 'Nivel máximo'}</span>
+                </div>
+                <div class="progress-track"><div class="progress-fill" style="width:${lvl.pct}%;"></div></div>
+              </div>
+            </aside>
+          </div>
+        `;
+
+        document.getElementById('toggleTopSelectorBtn').onclick = () => {
+          showTopSelector = !showTopSelector;
+          if (showTopSelector) { isPaused = true; stopTimer(); }
+          else if (!result) { isPaused = false; startTimer(); }
+          render();
+        };
+        if (showTopSelector) {
+          document.getElementById('topBasicTensesBtn').onclick = () => { state.config.tenses = ['present', 'passe_simple', 'passe_compose', 'imparfait', 'futur_simple']; saveState(); render(); };
+          document.getElementById('topAllTensesBtn').onclick = () => { state.config.tenses = TENSES.map(t => t.id); saveState(); render(); };
+          root.querySelectorAll('[data-top-tense]').forEach(b => {
+            b.onclick = () => {
+              const id = b.dataset.topTense;
+              state.config.tenses = state.config.tenses.includes(id) ? state.config.tenses.filter(x => x !== id) : [...state.config.tenses, id];
+              saveState(); render();
+            };
+          });
+          document.getElementById('topVerbSearchInp').oninput = (e) => {
+            searchQuery = e.target.value;
+            const pos = e.target.selectionStart;
+            render();
+            const el = document.getElementById('topVerbSearchInp');
+            if (el) { el.focus(); el.setSelectionRange(pos, pos); }
+          };
+          root.querySelectorAll('[data-top-preset]').forEach(b => { b.onclick = () => { state.config.verbs = PRESETS[Number(b.dataset.topPreset)].ids.slice(); saveState(); render(); }; });
+          document.getElementById('topClearVerbsBtn').onclick = () => { state.config.verbs = []; saveState(); render(); };
+          root.querySelectorAll('[data-top-verb]').forEach(b => {
+            b.onclick = () => {
+              const id = b.dataset.topVerb;
+              state.config.verbs = state.config.verbs.includes(id) ? state.config.verbs.filter(x => x !== id) : [...state.config.verbs, id];
+              saveState(); render();
+            };
+          });
+          document.getElementById('topMoreCfgBtn').onclick = () => { showTopSelector = false; activeTab = 'configurar'; stopTimer(); render(); };
+          document.getElementById('topApplyBtn').onclick = () => {
+            overrideVerbs = null;
+            showTopSelector = false;
+            startNewSession(true);
+          };
+        }
+
+        document.getElementById('clearOverBtn')?.addEventListener('click', () => { overrideVerbs = null; startNewSession(); });
+        document.getElementById('pauseBtn')?.addEventListener('click', () => {
+          isPaused = !isPaused;
+          if (isPaused) stopTimer(); else startTimer();
+          render();
+        });
+        document.getElementById('answerInput')?.addEventListener('input', (e) => { userInput = e.target.value; });
+        document.getElementById('practiceForm')?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (result) nextQuestion(); else finalize(false);
+        });
+        root.querySelectorAll('[data-acc]').forEach(btn => {
+          btn.onclick = () => {
+            const inp = document.getElementById('answerInput');
+            if (!inp || result) return;
+            const c = btn.dataset.acc;
+            const s = inp.selectionStart ?? inp.value.length;
+            const e = inp.selectionEnd ?? inp.value.length;
+            inp.value = inp.value.slice(0, s) + c + inp.value.slice(e);
+            userInput = inp.value;
+            inp.focus();
+            inp.setSelectionRange(s + 1, s + 1);
+          };
+        });
+        document.getElementById('speakMainBtn')?.addEventListener('click', () => speakFr(question.canonical, 0.95));
+        document.getElementById('speakSlowBtn')?.addEventListener('click', () => speakFr(question.canonical, 0.7));
+        document.getElementById('nextBtn')?.addEventListener('click', nextQuestion);
+      }
+
+      function renderConfig(root) {
+        const q = searchQuery.trim().toLowerCase();
+        const filtered = q ? VERBS.filter(v => v.inf.toLowerCase().includes(q) || v.esInf.toLowerCase().includes(q)) : VERBS;
+        const validCount = countValidPairs(state.config.verbs, state.config.tenses);
+
+        root.innerHTML = `
+          <div class="section-head">
+            <div>
+              <h1 class="section-title">Configura tu sesión de práctica</h1>
+              <p class="small muted">Elige los tiempos verbales y los verbos en infinitivo que quieres repasar hoy.</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <span class="small muted tabular">${validCount} combinaciones válidas</span>
+              <button type="button" class="btn btn-primary" id="startFromCfgBtn" ${validCount === 0 ? 'disabled' : ''}>▶ Empezar práctica</button>
+            </div>
+          </div>
+
+          ${validCount === 0 ? '<div class="card" style="background:var(--amber-bg);border-color:var(--amber-border);margin-bottom:20px;font-size:0.9rem;">Selecciona al menos un verbo y un tiempo verbal compatible (recuerda que <strong>y avoir</strong>, <strong>falloir</strong>, <strong>pouvoir</strong> y <strong>devoir</strong> no tienen imperativo).</div>' : ''}
+
+          <section class="card" style="margin-bottom:24px;">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+              <div>
+                <h2 style="font-size:1.1rem;font-weight:700;">1. Tiempos verbales (${state.config.tenses.length} de ${TENSES.length})</h2>
+                <p class="xs muted">El pretérito perfecto simple y el compuesto español se responden ambos con el passé composé.</p>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="btn btn-outline btn-sm" id="basicTensesBtn">Básicos</button>
+                <button type="button" class="btn btn-outline btn-sm" id="allTensesBtn">Todos</button>
+              </div>
+            </div>
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:20px;">
+              ${MOODS.map(mood => `
+                <div>
+                  <h3 class="xs muted" style="font-weight:700;">${mood}</h3>
+                  <div class="tense-grid">
+                    ${TENSES.filter(t => t.mood === mood).map(t => {
+                      const sel = state.config.tenses.includes(t.id);
+                      return `
+                        <button type="button" class="select-tile ${sel ? 'selected' : ''}" data-tense="${t.id}">
+                          <div>
+                            <div style="font-weight:700;font-size:0.9rem;">${esc(t.es)}</div>
+                            <div class="xs muted">${esc(t.fr)}</div>
+                          </div>
+                          <span class="check-box">${sel ? '✓' : ''}</span>
+                        </button>`;
+                    }).join('')}
+                  </div>
+                </div>`).join('')}
+            </div>
+          </section>
+
+          <section class="card" style="margin-bottom:24px;">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+              <div>
+                <h2 style="font-size:1.1rem;font-weight:700;">2. Verbos en infinitivo (${state.config.verbs.length} de ${VERBS.length})</h2>
+                <p class="xs muted">Incluye los verbos más usuales e impersonales (il y a / il faut).</p>
+              </div>
+              <input type="text" class="search-input" id="verbSearchInp" value="${esc(searchQuery)}" placeholder="Buscar verbo..." />
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center;">
+              <span class="xs muted">Selección rápida:</span>
+              ${PRESETS.map((p, i) => `<button type="button" class="btn btn-outline btn-sm" data-preset="${i}">${esc(p.label)}</button>`).join('')}
+              <button type="button" class="btn btn-outline btn-sm" id="clearVerbsBtn">Limpiar</button>
+            </div>
+
+            <div class="verb-grid">
+              ${filtered.map(v => {
+                const sel = state.config.verbs.includes(v.id);
+                return `
+                  <button type="button" class="select-tile ${sel ? 'selected' : ''}" data-verb="${v.id}">
+                    <div style="min-width:0;">
+                      <div style="font-weight:700;font-size:0.92rem;">${esc(v.inf)}</div>
+                      <div class="xs muted">${esc(v.esInf)}</div>
+                    </div>
+                    <span class="check-box">${sel ? '✓' : ''}</span>
+                  </button>`;
+              }).join('')}
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 style="font-size:1.1rem;font-weight:700;padding-bottom:14px;border-bottom:1px solid var(--border);">3. Preferencias de estudio</h2>
+            <div class="grid-2" style="margin-top:18px;">
+              <div>
+                <p style="font-weight:600;font-size:0.9rem;">Duración de la sesión</p>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+                  ${[{ v: 10, l: '10 verbos' }, { v: 15, l: '15 verbos' }, { v: 20, l: '20 verbos' }, { v: 0, l: 'Modo libre' }].map(o =>
+                    `<button type="button" class="btn btn-sm ${state.config.sessionLen === o.v ? 'btn-primary' : 'btn-outline'}" data-len="${o.v}">${o.l}</button>`
+                  ).join('')}
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:12px;font-size:0.9rem;">
+                <label style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;"><span>Pronunciación automática al comprobar</span><input type="checkbox" id="chkAutoSpeak" ${state.config.autoSpeak ? 'checked' : ''} /></label>
+                <label style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;"><span>Barra de caracteres franceses (é, è, ç...)</span><input type="checkbox" id="chkAccentBar" ${state.config.accentBar ? 'checked' : ''} /></label>
+                <label style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;"><span>Mostrar pista del infinitivo en la pregunta</span><input type="checkbox" id="chkInfHint" ${state.config.infHint ? 'checked' : ''} /></label>
+              </div>
+            </div>
+          </section>
+        `;
+
+        document.getElementById('startFromCfgBtn').onclick = () => { overrideVerbs = null; activeTab = 'practicar'; startNewSession(); };
+        document.getElementById('verbSearchInp').oninput = (e) => {
+          searchQuery = e.target.value;
+          const pos = e.target.selectionStart;
+          render();
+          const el = document.getElementById('verbSearchInp');
+          if (el) { el.focus(); el.setSelectionRange(pos, pos); }
+        };
+        root.querySelectorAll('[data-preset]').forEach(b => { b.onclick = () => { state.config.verbs = PRESETS[Number(b.dataset.preset)].ids.slice(); saveState(); render(); }; });
+        document.getElementById('clearVerbsBtn').onclick = () => { state.config.verbs = []; saveState(); render(); };
+        root.querySelectorAll('[data-verb]').forEach(b => {
+          b.onclick = () => {
+            const id = b.dataset.verb;
+            state.config.verbs = state.config.verbs.includes(id) ? state.config.verbs.filter(x => x !== id) : [...state.config.verbs, id];
+            saveState(); render();
+          };
+        });
+        document.getElementById('basicTensesBtn').onclick = () => { state.config.tenses = ['present', 'passe_simple', 'passe_compose', 'imparfait', 'futur_simple']; saveState(); render(); };
+        document.getElementById('allTensesBtn').onclick = () => { state.config.tenses = TENSES.map(t => t.id); saveState(); render(); };
+        root.querySelectorAll('[data-tense]').forEach(b => {
+          b.onclick = () => {
+            const id = b.dataset.tense;
+            state.config.tenses = state.config.tenses.includes(id) ? state.config.tenses.filter(x => x !== id) : [...state.config.tenses, id];
+            saveState(); render();
+          };
+        });
+        root.querySelectorAll('[data-len]').forEach(b => { b.onclick = () => { state.config.sessionLen = Number(b.dataset.len); saveState(); render(); }; });
+        document.getElementById('chkAutoSpeak').onchange = (e) => { state.config.autoSpeak = e.target.checked; saveState(); };
+        document.getElementById('chkAccentBar').onchange = (e) => { state.config.accentBar = e.target.checked; saveState(); };
+        document.getElementById('chkInfHint').onchange = (e) => { state.config.infHint = e.target.checked; saveState(); };
+      }
+
+      function renderStats(root) {
+        const lvl = levelInfo(state.xp);
+        const streak = effectiveStreak();
+        const today = dateKey();
+        const todayCount = (state.dailyHistory[today] || {}).attempts || 0;
+        const acc = state.totalAttempts ? Math.round((state.totalCorrect / state.totalAttempts) * 100) : 0;
+        const avgSec = state.totalAttempts ? (state.totalTimeMs / state.totalAttempts / 1000).toFixed(1) : '—';
+
+        const days = [];
+        const wk = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(); d.setDate(d.getDate() - i);
+          days.push({ key: dateKey(d), label: i === 0 ? 'Hoy' : wk[d.getDay()] });
+        }
+        const maxDay = Math.max(state.dailyGoal, ...days.map(d => (state.dailyHistory[d.key] || {}).attempts || 0));
+
+        const practiced = Object.entries(state.verbStats)
+          .filter(([, s]) => s.attempts > 0)
+          .map(([id, s]) => ({ id, v: VERB_MAP[id], attempts: s.attempts, correct: s.correct, acc: Math.round((s.correct / s.attempts) * 100) }))
+          .filter(x => Boolean(x.v))
+          .sort((a, b) => a.acc - b.acc || b.attempts - a.attempts);
+        const weakIds = practiced.filter(x => x.acc < 85).slice(0, 6).map(x => x.id);
+
+        root.innerHTML = `
+          <div class="section-head">
+            <div>
+              <h1 class="section-title">Tu progreso y estadísticas</h1>
+              <p class="small muted">Seguimiento personal de precisión, rachas diarias, puntos y dominio por tiempo verbal.</p>
+            </div>
+            ${weakIds.length ? `<button type="button" class="btn btn-primary" id="weakGoBtn">▶ Repasar ${weakIds.length} verbos con fallos</button>` : ''}
+          </div>
+
+          <div class="grid-4" style="margin-bottom:24px;">
+            <div class="card"><p class="xs muted">Verbos practicados</p><p class="tabular" style="font-size:1.85rem;font-weight:800;margin-top:6px;">${state.totalAttempts}</p><p class="xs muted tabular">${todayCount} hoy · media ${avgSec} s</p></div>
+            <div class="card"><p class="xs muted">Precisión global</p><p class="tabular" style="font-size:1.85rem;font-weight:800;margin-top:6px;">${acc}%</p><p class="xs muted tabular">${state.totalCorrect} aciertos · serie máx. ${state.bestSessionStreak}</p></div>
+            <div class="card"><p class="xs muted">🔥 Racha diaria</p><p class="tabular" style="font-size:1.85rem;font-weight:800;margin-top:6px;">${streak} ${streak === 1 ? 'día' : 'días'}</p><p class="xs muted tabular">Récord: ${state.longestStreak} ${state.longestStreak === 1 ? 'día' : 'días'}</p></div>
+            <div class="card"><p class="xs muted">🏆 Nivel</p><p style="font-size:1.35rem;font-weight:800;margin-top:8px;">Nv. ${lvl.level} · ${esc(lvl.title)}</p><p class="xs tabular" style="color:var(--accent);font-weight:600;margin-top:2px;">${state.xp} XP ${lvl.nextMin ? `/ ${lvl.nextMin} XP` : '(Máximo)'}</p></div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:24px;">
+            <section class="card">
+              <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+                <div><h2 style="font-size:1rem;font-weight:700;">Constancia últimos 7 días</h2><p class="xs muted">Practica al menos 1 verbo al día para mantener tu racha.</p></div>
+                <select id="goalSel" style="padding:5px 8px;border-radius:7px;border:1px solid var(--border-strong);font-size:0.8rem;">
+                  ${[5, 10, 15, 20].map(g => `<option value="${g}" ${state.dailyGoal === g ? 'selected' : ''}>Meta: ${g}/día</option>`).join('')}
+                </select>
+              </div>
+              <div class="bars-7d">
+                ${days.map(d => {
+                  const c = (state.dailyHistory[d.key] || {}).attempts || 0;
+                  const pct = maxDay ? Math.round((c / maxDay) * 100) : 0;
+                  return `
+                    <div class="bar-col">
+                      <span class="xs muted tabular">${c}</span>
+                      <div class="bar-well"><div class="bar-fill ${c >= state.dailyGoal ? 'goal' : ''}" style="height:${c > 0 ? Math.max(12, pct) : 0}%;"></div></div>
+                      <span class="xs" style="${d.label === 'Hoy' ? 'font-weight:700;' : 'color:var(--text-muted);'}">${d.label}</span>
+                    </div>`;
+                }).join('')}
+              </div>
+            </section>
+
+            <section class="card">
+              <h2 style="font-size:1rem;font-weight:700;padding-bottom:14px;border-bottom:1px solid var(--border);">Niveles de usuario</h2>
+              <div style="margin-top:8px;">
+                ${LEVELS.map(l => {
+                  const isCur = lvl.level === l.level;
+                  const unl = state.xp >= l.min;
+                  return `
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--surface-muted);font-size:0.88rem;">
+                      <span><strong class="tabular" style="color:${isCur ? 'var(--accent)' : unl ? 'var(--emerald)' : 'var(--text-muted)'};">Nv.${l.level}</strong> <span style="${isCur ? 'font-weight:700;' : !unl ? 'color:var(--text-muted);' : ''}">${esc(l.title)}</span></span>
+                      <span class="xs muted tabular">${isCur ? 'Actual' : unl ? 'Superado' : `${l.min} XP`}</span>
+                    </div>`;
+                }).join('')}
+              </div>
+            </section>
+          </div>
+
+          <section class="card" style="margin-bottom:24px;">
+            <h2 style="font-size:1rem;font-weight:700;padding-bottom:14px;border-bottom:1px solid var(--border);">Rendimiento por tiempo verbal</h2>
+            <div class="grid-2" style="margin-top:16px;gap:14px;">
+              ${TENSES.map(t => {
+                const s = state.tenseStats[t.id] || { attempts: 0, correct: 0 };
+                const tAcc = s.attempts ? Math.round((s.correct / s.attempts) * 100) : 0;
+                const col = !s.attempts ? 'transparent' : tAcc >= 80 ? 'var(--emerald)' : tAcc >= 55 ? 'var(--amber)' : 'var(--rose)';
+                return `
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                      <span><strong>${esc(t.es)}</strong> <span class="xs muted">(${esc(t.fr)})</span></span>
+                      <span class="xs muted tabular">${s.attempts ? `${tAcc}% (${s.correct}/${s.attempts})` : 'Sin datos'}</span>
+                    </div>
+                    <div class="progress-track" style="height:7px;"><div class="progress-fill" style="width:${tAcc}%;background:${col};"></div></div>
+                  </div>`;
+              }).join('')}
+            </div>
+          </section>
+
+          <section class="card">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+              <h2 style="font-size:1rem;font-weight:700;">Progreso por verbo (${practiced.length} practicados)</h2>
+              ${confirmReset
+                ? `<div style="display:flex;align-items:center;gap:8px;"><span class="xs" style="color:var(--rose);font-weight:600;">¿Borrar todo tu progreso?</span><button type="button" class="btn btn-danger btn-sm" id="confResetBtn">Confirmar</button><button type="button" class="btn btn-outline btn-sm" id="cancResetBtn">Cancelar</button></div>`
+                : `<button type="button" class="btn btn-outline btn-sm" id="askResetBtn">Reiniciar estadísticas</button>`}
+            </div>
+            ${practiced.length === 0 ? '<p class="small muted" style="margin-top:16px;">Todavía no has completado ningún verbo. Empieza una sesión en Practicar.</p>' : `
+              <div style="overflow-x:auto;margin-top:10px;">
+                <table>
+                  <thead><tr><th>Infinitivo</th><th>Significado</th><th class="text-right">Aciertos</th><th class="text-right">Precisión</th><th class="text-right">Estado</th></tr></thead>
+                  <tbody>
+                    ${practiced.map(r => `
+                      <tr>
+                        <td><strong>${esc(r.v.inf)}</strong></td>
+                        <td class="muted">${esc(r.v.esInf)}</td>
+                        <td class="text-right tabular">${r.correct}/${r.attempts}</td>
+                        <td class="text-right tabular"><strong>${r.acc}%</strong></td>
+                        <td class="text-right xs" style="font-weight:600;color:${r.acc >= 85 ? 'var(--emerald)' : r.acc >= 60 ? 'var(--amber)' : 'var(--rose)'};">${r.acc >= 85 ? 'Dominado' : r.acc >= 60 ? 'En progreso' : 'Por reforzar'}</td>
+                      </tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>`}
+          </section>
+        `;
+
+        document.getElementById('weakGoBtn')?.addEventListener('click', () => { overrideVerbs = weakIds; activeTab = 'practicar'; startNewSession(); });
+        document.getElementById('goalSel').onchange = (e) => { state.dailyGoal = Number(e.target.value); saveState(); render(); };
+        document.getElementById('askResetBtn')?.addEventListener('click', () => { confirmReset = true; render(); });
+        document.getElementById('cancResetBtn')?.addEventListener('click', () => { confirmReset = false; render(); });
+        document.getElementById('confResetBtn')?.addEventListener('click', () => {
+          const cfg = state.config;
+          state = defaultState();
+          state.config = cfg;
+          saveState();
+          confirmReset = false;
+          render();
+        });
+      }
+
+      function renderOffline(root) {
+        const online = navigator.onLine;
+        const hasVoice = Boolean(getFrenchVoice());
+
+        root.innerHTML = `
+          <div class="section-head">
+            <div>
+              <h1 class="section-title">Modo de práctica sin conexión</h1>
+              <p class="small muted">Esta aplicación es 100% código HTML local: funciona en cualquier dispositivo sin internet ni servidor.</p>
+            </div>
+            <button type="button" class="btn btn-primary" id="offStartBtn">Practicar ahora</button>
+          </div>
+
+          <div class="grid-2">
+            <section class="card">
+              <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+                <div>
+                  <p style="font-weight:700;">${online ? '🟢 Conexión activa' : '🟠 Sin conexión a Internet'}</p>
+                  <p class="xs muted">Todo el motor verbal y el historial se ejecutan localmente en tu navegador.</p>
+                </div>
+                <label style="display:inline-flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:600;cursor:pointer;">
+                  <input type="checkbox" id="chkOffFocus" ${state.config.offlineFocus ? 'checked' : ''} />
+                  Modo estudio sin conexión
+                </label>
+              </div>
+              <div style="margin-top:8px;">
+                <div class="list-row"><span>✓ Base de verbos e impersonales (il y a / il faut)</span><span class="xs muted tabular">${VERBS.length} verbos</span></div>
+                <div class="list-row"><span>✓ Tiempos verbales completos</span><span class="xs muted tabular">${TENSES.length} tiempos</span></div>
+                <div class="list-row"><span>✓ Estadísticas, puntos XP, niveles y rachas</span><span class="xs muted">LocalStorage</span></div>
+                <div class="list-row">
+                  <div><span>✓ Voz francesa local del navegador</span><p class="xs muted">${hasVoice ? 'Voz fr-FR detectada.' : 'Usa el motor de voz del sistema.'}</p></div>
+                  <button type="button" class="btn btn-outline btn-sm" id="testVoiceBtn">🔊 Probar audio</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <h2 style="font-size:1rem;font-weight:700;">Copia o descarga el código HTML único</h2>
+              <p class="small muted" style="margin-top:8px;line-height:1.6;">
+                Al ser una aplicación en un único archivo HTML, puedes copiar el código para pegarlo en el Bloc de notas o descargar el archivo listo para abrir sin conexión.
+              </p>
+              <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;">
+                <button type="button" class="btn btn-primary" id="copyHtmlBtn">📋 Copiar código HTML</button>
+                <button type="button" class="btn btn-outline" id="downloadHtmlBtn">⬇ Descargar conjugo.html</button>
+                <button type="button" class="btn btn-outline" id="showHtmlBtn">👁 Ver código HTML</button>
+              </div>
+              <p id="copyFeedback" class="xs" style="color:var(--emerald);font-weight:600;margin-top:10px;display:none;">✓ Código HTML copiado al portapapeles. Pégalo en el Bloc de notas y guárdalo como conjugo.html (UTF-8).</p>
+              <div id="htmlSourceWrap" style="display:none;margin-top:14px;">
+                <p class="xs muted" style="margin-bottom:6px;">Pulsa <strong>Ctrl + C</strong> (o Cmd + C en Mac) para copiar todo el código seleccionado:</p>
+                <textarea id="htmlSourceBox" readonly style="width:100%;height:220px;font-family:var(--font-mono);font-size:0.75rem;padding:10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--bg);color:var(--text);"></textarea>
+              </div>
+              <p class="xs muted" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+                En el Bloc de notas de Windows: pega el código, pulsa <strong>Archivo → Guardar como</strong>, selecciona <strong>Todos los archivos (*.*)</strong>, codificación <strong>UTF-8</strong> y nómbralo <strong>conjugo.html</strong>.
+              </p>
+            </section>
+          </div>
+        `;
+
+        const buildCleanStandaloneHtml = () => {
+          const clone = document.documentElement.cloneNode(true);
+          clone.querySelectorAll('script[src], link[rel="manifest"], script[type="module"]').forEach(el => el.remove());
+          clone.querySelector('#appRoot').innerHTML = '';
+          clone.querySelector('#desktopNav').innerHTML = '';
+          clone.querySelector('#mobileNav').innerHTML = '';
+          clone.querySelector('#offlineToast').style.display = 'none';
+          return '<!doctype html>\n' + clone.outerHTML;
+        };
+
+        document.getElementById('offStartBtn').onclick = () => { activeTab = 'practicar'; startNewSession(); };
+        document.getElementById('chkOffFocus').onchange = (e) => { state.config.offlineFocus = e.target.checked; saveState(); renderOfflineBanner(); };
+        document.getElementById('testVoiceBtn').onclick = () => speakFr('Bonjour, je suis prêt à pratiquer sans connexion.', 0.92);
+        document.getElementById('showHtmlBtn').onclick = () => {
+          const wrap = document.getElementById('htmlSourceWrap');
+          const box = document.getElementById('htmlSourceBox');
+          if (!wrap || !box) return;
+          if (wrap.style.display === 'none') {
+            box.value = buildCleanStandaloneHtml();
+            wrap.style.display = 'block';
+            box.focus();
+            box.select();
+          } else {
+            wrap.style.display = 'none';
+          }
+        };
+        document.getElementById('copyHtmlBtn').onclick = async () => {
+          const htmlText = buildCleanStandaloneHtml();
+          const fb = document.getElementById('copyFeedback');
+          const wrap = document.getElementById('htmlSourceWrap');
+          const box = document.getElementById('htmlSourceBox');
+          let copied = false;
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(htmlText);
+              copied = true;
+            }
+          } catch {}
+          if (!copied) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = htmlText;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.focus();
+              ta.select();
+              copied = document.execCommand('copy');
+              document.body.removeChild(ta);
+            } catch {}
+          }
+          if (copied && fb) {
+            fb.style.display = 'block';
+          } else if (wrap && box) {
+            box.value = htmlText;
+            wrap.style.display = 'block';
+            box.focus();
+            box.select();
+          }
+        };
+        document.getElementById('downloadHtmlBtn').onclick = () => {
+          const htmlText = buildCleanStandaloneHtml();
+          const blob = new Blob([htmlText], { type: 'text/html;charset=utf-8' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'conjugo.html';
+          a.click();
+          URL.revokeObjectURL(a.href);
+        };
+      }
+
+      function render() {
+        renderNav();
+        renderOfflineBanner();
+        const root = document.getElementById('appRoot');
+        if (activeTab === 'practicar') renderPractice(root);
+        else if (activeTab === 'configurar') renderConfig(root);
+        else if (activeTab === 'estadisticas') renderStats(root);
+        else renderOffline(root);
+      }
+
+      // Inicialización
+      document.getElementById('brandBtn').onclick = () => { activeTab = 'practicar'; render(); startTimer(); };
+      document.getElementById('newSessionBtn').onclick = () => { overrideVerbs = null; activeTab = 'practicar'; startNewSession(); };
+      window.addEventListener('online', renderOfflineBanner);
+      window.addEventListener('offline', renderOfflineBanner);
+
+      startNewSession(true);
+    })();
+  </script>
+</body>
 </html>
