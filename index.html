@@ -1083,9 +1083,14 @@
       function getFrenchVoice() {
         if (!('speechSynthesis' in window)) return null;
         const voices = window.speechSynthesis.getVoices();
-        return voices.find(v => v.lang.toLowerCase() === 'fr-fr' && v.localService)
-          || voices.find(v => v.lang.toLowerCase() === 'fr-fr')
-          || voices.find(v => v.lang.toLowerCase().startsWith('fr'))
+        const normLang = (l) => String(l || '').replace('_', '-').toLowerCase();
+        const preferredNames = ['thomas', 'amélie', 'amelie', 'hortense', 'denise', 'henri', 'audrey', 'aurélie', 'aurelie', 'julie', 'paul'];
+        const frVoices = voices.filter(v => normLang(v.lang).startsWith('fr'));
+        return frVoices.find(v => v.localService && preferredNames.some(n => v.name.toLowerCase().includes(n)))
+          || frVoices.find(v => normLang(v.lang) === 'fr-fr' && v.localService)
+          || frVoices.find(v => v.localService)
+          || frVoices.find(v => normLang(v.lang) === 'fr-fr')
+          || frVoices[0]
           || null;
       }
       if ('speechSynthesis' in window) {
@@ -1141,13 +1146,12 @@
         if (token !== playToken) return;
         if (!('speechSynthesis' in window)) {
           speaking = false;
-          setAudioError('Tu navegador no admite síntesis de voz y el servidor TTS no está disponible.');
+          setAudioError('Tu navegador no admite síntesis de voz.');
           return;
         }
         try {
           const synth = window.speechSynthesis;
           try { synth.resume(); } catch {}
-          const wasBusy = synth.speaking || synth.pending;
 
           const u = new SpeechSynthesisUtterance(text);
           activeUtterance = u;
@@ -1172,16 +1176,27 @@
             speaking = false;
             updateSpeakButtons();
           };
-          u.onerror = () => {
+          u.onerror = (ev) => {
             if (token !== playToken) return;
-            if (!skipVoice && u.voice) {
+            const errCode = ev && ev.error ? String(ev.error) : '';
+            if (errCode === 'interrupted' || errCode === 'canceled') {
+              speaking = false;
+              updateSpeakButtons();
+              return;
+            }
+            if (!skipVoice && u.voice && errCode !== 'not-allowed') {
               speakWithBrowser(text, rate, token, true);
               return;
             }
             if (activeUtterance === u) activeUtterance = null;
             if (speakSafetyTimer) { clearTimeout(speakSafetyTimer); speakSafetyTimer = null; }
             speaking = false;
-            setAudioError('El navegador no pudo reproducir audio. Comprueba el volumen o activa una voz en francés en tu dispositivo.');
+            if (errCode === 'not-allowed') {
+              setAudioError('El navegador bloqueó el audio en esta vista previa o sin clic directo. Pulsa 🔊 Escuchar o abre la app en una pestaña nueva.');
+            } else {
+              const count = synth.getVoices ? synth.getVoices().length : 0;
+              setAudioError(`No se pudo reproducir el audio (${errCode || 'error del navegador'} · voces detectadas: ${count}). Prueba abrir la app en una pestaña nueva.`);
+            }
           };
 
           speaking = true;
@@ -1194,17 +1209,7 @@
             }
           }, 7000);
 
-          if (wasBusy) {
-            try { synth.cancel(); } catch {}
-            setTimeout(() => {
-              if (token === playToken) {
-                try { synth.resume(); } catch {}
-                synth.speak(u);
-              }
-            }, 60);
-          } else {
-            synth.speak(u);
-          }
+          synth.speak(u);
         } catch {
           if (token === playToken) {
             speaking = false;

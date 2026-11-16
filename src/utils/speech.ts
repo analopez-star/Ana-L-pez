@@ -39,11 +39,31 @@ function findFrenchVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
 
-  const exactFr = voices.find((v) => v.lang.toLowerCase() === 'fr-fr' && v.localService);
-  const anyFrFr = voices.find((v) => v.lang.toLowerCase() === 'fr-fr');
-  const anyFr = voices.find((v) => v.lang.toLowerCase().startsWith('fr'));
+  const normLang = (l: string) => l.replace('_', '-').toLowerCase();
+  const preferredNames = [
+    'thomas',
+    'amélie',
+    'amelie',
+    'hortense',
+    'denise',
+    'henri',
+    'audrey',
+    'aurélie',
+    'aurelie',
+    'julie',
+    'paul',
+  ];
+  const frVoices = voices.filter((v) => normLang(v.lang).startsWith('fr'));
 
-  cachedFrenchVoice = exactFr || anyFrFr || anyFr || null;
+  cachedFrenchVoice =
+    frVoices.find(
+      (v) => v.localService && preferredNames.some((n) => v.name.toLowerCase().includes(n))
+    ) ||
+    frVoices.find((v) => normLang(v.lang) === 'fr-fr' && v.localService) ||
+    frVoices.find((v) => v.localService) ||
+    frVoices.find((v) => normLang(v.lang) === 'fr-fr') ||
+    frVoices[0] ||
+    null;
   return cachedFrenchVoice;
 }
 
@@ -125,7 +145,6 @@ function speakWithBrowser(
     } catch {
       // ignore
     }
-    const wasBusy = synth.speaking || synth.pending;
 
     const utterance = new SpeechSynthesisUtterance(text);
     activeUtterance = utterance;
@@ -156,9 +175,14 @@ function speakWithBrowser(
       }
       options?.onEnd?.();
     };
-    utterance.onerror = () => {
+    utterance.onerror = (ev) => {
       if (token !== playToken) return;
-      if (!skipVoice && utterance.voice) {
+      const errCode = ev?.error || '';
+      if (errCode === 'interrupted' || errCode === 'canceled') {
+        options?.onEnd?.();
+        return;
+      }
+      if (!skipVoice && utterance.voice && errCode !== 'not-allowed') {
         speakWithBrowser(text, rate, token, options, true);
         return;
       }
@@ -176,25 +200,7 @@ function speakWithBrowser(
       if (token === playToken) options?.onEnd?.();
     }, 7000);
 
-    if (wasBusy) {
-      try {
-        synth.cancel();
-      } catch {
-        // ignore
-      }
-      window.setTimeout(() => {
-        if (token === playToken) {
-          try {
-            synth.resume();
-          } catch {
-            // ignore
-          }
-          synth.speak(utterance);
-        }
-      }, 60);
-    } else {
-      synth.speak(utterance);
-    }
+    synth.speak(utterance);
   } catch {
     if (token === playToken) options?.onEnd?.();
   }
