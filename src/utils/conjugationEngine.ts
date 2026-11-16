@@ -128,8 +128,8 @@ function buildImpersonalFrench(verb: VerbDefinition, frenchKey: FrenchTenseKey):
 }
 
 function needsSpanishSubjectHint(tenseId: TenseId, personIndex: PersonIndex): boolean {
-  // Always clarify 3rd person gender (él vs ella, ellos vs ellas)
-  if (personIndex === 2 || personIndex === 5) return true;
+  // Always clarify 3rd person gender (él vs ella, ellos vs ellas) and 1st plural (nous vs on)
+  if (personIndex === 2 || personIndex === 3 || personIndex === 5) return true;
   // In Spanish, 1st and 3rd singular are identical in imperfecto, pluscuamperfecto, condicional, subjuntivo
   if (
     personIndex === 0 &&
@@ -209,7 +209,7 @@ export function generateQuestion(
     const personIndex: PersonIndex = impIdx === 0 ? 1 : impIdx === 1 ? 3 : 4;
     const esImpForm = verb.es.imperatif[impIdx];
     const frImpForm = verb.fr.imperatif[impIdx];
-    const esHint = impIdx === 0 ? 'tú' : impIdx === 1 ? 'nosotros' : 'vosotros';
+    const esHint = impIdx === 0 ? 'tú' : impIdx === 1 ? 'nosotros/as' : 'vosotros/as';
 
     return {
       id: `${verb.id}-${tenseId}-${personIndex}-${Date.now()}`,
@@ -236,6 +236,8 @@ export function generateQuestion(
   let frenchPronoun = 'je';
   let spanishPronoun = 'yo';
   let isFeminine3rd = false;
+  let useOn = false;
+  let conjugationIndex: PersonIndex = personIndex;
 
   switch (personIndex) {
     case 0:
@@ -257,8 +259,10 @@ export function generateQuestion(
       }
       break;
     case 3:
-      frenchPronoun = 'nous';
-      spanishPronoun = 'nosotros';
+      useOn = Math.random() < 0.5;
+      frenchPronoun = useOn ? 'on' : 'nous';
+      conjugationIndex = useOn ? 2 : 3;
+      spanishPronoun = useOn ? 'nosotros/as · usa on' : 'nosotros/as · usa nous';
       break;
     case 4:
       frenchPronoun = 'vous';
@@ -286,7 +290,7 @@ export function generateQuestion(
   const acceptedFrenchForms: string[] = [];
 
   if (isCompound) {
-    const auxForm = getAuxiliaryArray(verb.auxiliary, frenchKey)[personIndex];
+    const auxForm = getAuxiliaryArray(verb.auxiliary, frenchKey)[conjugationIndex];
     const baseParticiple = verb.participePasse;
     const prefix = combinePronounAndVerb(frenchPronoun, auxForm);
 
@@ -306,7 +310,16 @@ export function generateQuestion(
         acceptedFrenchForms.push(`${prefix} ${baseParticiple}`, `${prefix} ${baseParticiple}e`);
       } else if (personIndex === 3) {
         canonicalFrench = `${prefix} ${baseParticiple}s`;
-        acceptedFrenchForms.push(`${prefix} ${baseParticiple}s`, `${prefix} ${baseParticiple}es`);
+        if (useOn) {
+          acceptedFrenchForms.push(
+            `${prefix} ${baseParticiple}s`,
+            `${prefix} ${baseParticiple}es`,
+            `${prefix} ${baseParticiple}`,
+            `${prefix} ${baseParticiple}e`
+          );
+        } else {
+          acceptedFrenchForms.push(`${prefix} ${baseParticiple}s`, `${prefix} ${baseParticiple}es`);
+        }
       } else {
         // vous (plural or polite singular)
         canonicalFrench = `${prefix} ${baseParticiple}s`;
@@ -323,7 +336,7 @@ export function generateQuestion(
     }
   } else {
     const frSimpleArray = verb.fr[frenchKey as keyof typeof verb.fr] as string[];
-    const frVerbForm = frSimpleArray[personIndex];
+    const frVerbForm = frSimpleArray[conjugationIndex];
     canonicalFrench = combinePronounAndVerb(frenchPronoun, frVerbForm);
     acceptedFrenchForms.push(canonicalFrench);
 
@@ -337,10 +350,13 @@ export function generateQuestion(
     ? spanishPronoun
     : undefined;
 
-  const grammarTip =
+  const baseTip =
     tenseId === 'passe_simple' || tenseId === 'passe_compose'
       ? tenseMeta.note
       : verb.disambiguationNote || tenseMeta.note;
+  const grammarTip = useOn
+    ? `«on» equivale a nosotros/as, pero se conjuga en 3.ª persona del singular. ${baseTip}`
+    : baseTip;
 
   return {
     id: `${verb.id}-${tenseId}-${personIndex}-${Date.now()}`,

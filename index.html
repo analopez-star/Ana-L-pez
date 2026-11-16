@@ -290,9 +290,9 @@
     }
 
     .prompt-hint {
-      font-size: 1.5rem;
-      font-weight: 500;
-      color: #94A3B8;
+      font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+      font-weight: 600;
+      color: #64748B;
     }
 
     .prompt-main {
@@ -963,7 +963,7 @@
 
         if (tenseId === 'imperatif') {
           const idx = Math.floor(Math.random() * 3);
-          const hints = ['tú', 'nosotros', 'vosotros'];
+          const hints = ['tú', 'nosotros/as', 'vosotros/as'];
           return {
             id: `${verb.id}-${tenseId}-${idx}-${Date.now()}`,
             verbId: verb.id, inf: verb.inf, esInf: verb.esInf, tenseId, frKey,
@@ -974,10 +974,15 @@
         }
 
         const pIdx = Math.floor(Math.random() * 6);
-        let frPron = 'je', esPron = 'yo', fem = false;
+        let frPron = 'je', esPron = 'yo', fem = false, useOn = false, conjIdx = pIdx;
         if (pIdx === 1) { frPron = 'tu'; esPron = 'tú'; }
         else if (pIdx === 2) { if (Math.random() < 0.5) { frPron = 'il'; esPron = 'él'; } else { frPron = 'elle'; esPron = 'ella'; fem = true; } }
-        else if (pIdx === 3) { frPron = 'nous'; esPron = 'nosotros'; }
+        else if (pIdx === 3) {
+          useOn = Math.random() < 0.5;
+          frPron = useOn ? 'on' : 'nous';
+          conjIdx = useOn ? 2 : 3;
+          esPron = useOn ? 'nosotros/as · usa on' : 'nosotros/as · usa nous';
+        }
         else if (pIdx === 4) { frPron = 'vous'; esPron = 'vosotros'; }
         else if (pIdx === 5) { if (Math.random() < 0.5) { frPron = 'ils'; esPron = 'ellos'; } else { frPron = 'elles'; esPron = 'ellas'; fem = true; } }
 
@@ -986,21 +991,26 @@
         let accepted = [];
 
         if (isCompound) {
-          const auxForm = AUX_FORMS[verb.aux][frKey][pIdx];
+          const auxForm = AUX_FORMS[verb.aux][frKey][conjIdx];
           const pref = combinePron(frPron, auxForm);
           const pp = verb.pp;
           if (verb.aux === 'être') {
             if (pIdx === 2) { canonical = fem ? `${pref} ${pp}e` : `${pref} ${pp}`; accepted = [canonical]; }
             else if (pIdx === 5) { canonical = fem ? `${pref} ${pp}es` : `${pref} ${pp}s`; accepted = [canonical]; }
             else if (pIdx === 0 || pIdx === 1) { canonical = `${pref} ${pp}`; accepted = [`${pref} ${pp}`, `${pref} ${pp}e`]; }
-            else if (pIdx === 3) { canonical = `${pref} ${pp}s`; accepted = [`${pref} ${pp}s`, `${pref} ${pp}es`]; }
+            else if (pIdx === 3) {
+              canonical = `${pref} ${pp}s`;
+              accepted = useOn
+                ? [`${pref} ${pp}s`, `${pref} ${pp}es`, `${pref} ${pp}`, `${pref} ${pp}e`]
+                : [`${pref} ${pp}s`, `${pref} ${pp}es`];
+            }
             else { canonical = `${pref} ${pp}s`; accepted = [`${pref} ${pp}s`, `${pref} ${pp}es`, `${pref} ${pp}`, `${pref} ${pp}e`]; }
           } else {
             canonical = `${pref} ${pp}`;
             accepted = [canonical];
           }
         } else {
-          canonical = combinePron(frPron, verb.fr[frKey][pIdx]);
+          canonical = combinePron(frPron, verb.fr[frKey][conjIdx]);
           accepted = [canonical];
           if (frKey === 'subjonctif_present') {
             accepted.push((VOWEL_RE.test(frPron) ? "qu'" : 'que ') + canonical);
@@ -1008,13 +1018,15 @@
         }
 
         const ambig1st = pIdx === 0 && ['imparfait', 'plus_que_parfait', 'conditionnel_present', 'conditionnel_passe', 'subjonctif_present'].includes(tenseId);
-        const esHint = (pIdx === 2 || pIdx === 5 || ambig1st) ? esPron : null;
+        const esHint = (pIdx === 2 || pIdx === 3 || pIdx === 5 || ambig1st) ? esPron : null;
+        const baseTip = (tenseId === 'passe_simple' || tenseId === 'passe_compose') ? tMeta.note : (verb.note || tMeta.note);
+        const tip = useOn ? `«on» equivale a nosotros/as, pero se conjuga en 3.ª persona del singular. ${baseTip}` : baseTip;
 
         return {
           id: `${verb.id}-${tenseId}-${pIdx}-${Date.now()}`,
           verbId: verb.id, inf: verb.inf, esInf: verb.esInf, tenseId, frKey,
           esPrompt: verb.es[tenseId][pIdx], esHint, canonical, accepted,
-          tip: (tenseId === 'passe_simple' || tenseId === 'passe_compose') ? tMeta.note : (verb.note || tMeta.note),
+          tip,
           impersonal: false
         };
       }
